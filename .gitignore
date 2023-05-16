@@ -1,0 +1,11 @@
+# Ignore utility directories.
+bin/
+build
+data/
+lib/
+
+# Ingnore everuthing inside plots/ and report/ directories exept text tamplates.
+plots/*
+report/*
+!plots/*.tex
+!report/*.tex
