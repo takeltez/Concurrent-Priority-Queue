@@ -16,20 +16,20 @@ Pre-requirements:
 Run target `all` before any other target!<br>
 Run target `small-bench ` before `small-plot` and `report` targets!
 
-`all`<br>
-Compile executable and shared library files *bin/queue* and *lib/queue.so* respectively.
+- `all`<br>
+Build executable and shared library files `bin/queue` and `lib/queue.so` respectively.
 
-`small-bench`<br>
-Execute short representative benchmark and collect data in *data/* directory.
+- `small-bench`<br>
+Execute short representative benchmark `bench/becnmark.py` and collect data in `data` directory.
 
-`small-plot`<br>
-Generate *plot.pdf* in *plots/* directory.
+- `small-plot`<br>
+Generate `plot.pdf` in `plots` directory.
 
-`report`<br>
-Generate *report.pdf* in *report/* direcroty.
+- `report`<br>
+Generate `report.pdf` in `report` direcroty.
 
-`zip`<br>
+- `zip`<br>
 Archive all necessary files and directories.
 
-`clean`<br>
+- `clean`<br>
 Clean all utility files and directories.

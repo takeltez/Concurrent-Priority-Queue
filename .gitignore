@@ -1,11 +1,14 @@
-# Ignore utility directories.
+# Ignore utility files and directories.
 bin/
 build
 data/
 lib/
 
-# Ingnore everuthing inside plots/ and report/ directories exept text tamplates.
+# Ingnore everything inside plots/ and report/ directories except .tex templates.
 plots/*
 report/*
 !plots/*.tex
 !report/*.tex
+
+# Ignore generated archive.
+*zip

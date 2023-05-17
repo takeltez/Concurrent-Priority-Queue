@@ -1,3 +1,5 @@
+# Note! Makefile is ready but unusable due to nothing to work with.
+
 TARGET := queue
 
 CC := gcc
@@ -15,6 +17,7 @@ INCLUDE_DIR := $(SRC_DIR)/include
 DATA_DIR := data
 PLOT_DIR := plots
 REPORT_DIR := report
+BENCH_DIR := bench
 
 PLOT_NAME := plot
 REPORT_NAME := report
@@ -23,9 +26,6 @@ ARCH_NAME = Aleksei_Mariana_amp_project8
 
 SOURCES := $(wildcard $(SRC_DIR)/*.c)
 OBJECTS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SOURCES))
-
-# Following rargets have no effect for now!
-#     all bench small-bench small-plot report
 
 all: $(LIB_DIR) $(BIN_DIR) $(BUILD_DIR) $(TARGET) $(TARGET).so install
 
@@ -92,7 +92,7 @@ bench: $(DATA_DIR)
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
-	@python3 $(BENCH_NAME).py
+	@python3 $(BENCH_DIR)/$(BENCH_NAME).py
 
 small-plot:
 	@echo "============================================"
@@ -107,6 +107,6 @@ report: small-plot
 	@echo "Created $(REPORT_DIR)/$(REPORT_NAME).pdf"
 
 zip:
-	@zip $(ARCH_NAME).zip $(SRC_DIR)/* $(INCLUDE_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex $(BENCH_NAME).py Makefile README.md
+	@zip $(ARCH_NAME).zip $(BENCH_DIR)/* $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
 
 .PHONY: all clean bench small-bench small-plot report zip
