@@ -3,11 +3,7 @@
 TARGET := queue
 
 CC := gcc
-RM := rm
-INSTALL := install
-MKDIR := mkdir
-
-CFLAGS := -O3 -Wall -Wextra -fopenmp
+CFLAGS := -O3 -MD -Wall -Wextra -Werror -fopenmp
 
 LIB_DIR := lib
 BIN_DIR := bin
@@ -23,6 +19,10 @@ PLOT_NAME := plot
 REPORT_NAME := report
 BENCH_NAME := benchmark
 ARCH_NAME = Aleksei_Mariana_amp_project8
+
+RM := rm
+INSTALL := install
+MKDIR := mkdir
 
 SOURCES := $(wildcard $(SRC_DIR)/*.c)
 OBJECTS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SOURCES))
@@ -85,10 +85,6 @@ clean:
 	@echo "Removing archive $(ARCH_NAME).zip"
 	@$(RM) -f $(ARCH_NAME).zip
 
-bench: $(DATA_DIR)
-	@echo "============================================"
-	@echo "This could run a sophisticated benchmark"
-
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
@@ -109,4 +105,6 @@ report: small-plot
 zip:
 	@zip $(ARCH_NAME).zip $(BENCH_DIR)/* $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
 
-.PHONY: all clean bench small-bench small-plot report zip
+.PHONY: all clean small-bench small-plot report zip
+
+-include $(OBJECTS:.o=.d)
