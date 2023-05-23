@@ -1,5 +1,3 @@
-# Note! Makefile is ready but unusable due to nothing to work with.
-
 TARGET := queue
 
 CC := gcc
@@ -64,7 +62,7 @@ $(TARGET).so: $(OBJECTS)
 
 install:
 	@echo "============================================"
-	@echo "Installing $(TARGET) and $(TARGET).so into $(BIN_DIR)/ directory"
+	@echo "Installing $(TARGET) and $(TARGET).so into $(BIN_DIR)/ and $(LIB_DIR)/ directories respectively"
 	@$(INSTALL) $(TARGET) $(BIN_DIR)
 	@$(INSTALL) $(TARGET).so $(LIB_DIR)
 	@$(RM) -f $(TARGET)
@@ -103,7 +101,7 @@ report: small-plot
 	@echo "Created $(REPORT_DIR)/$(REPORT_NAME).pdf"
 
 zip:
-	@zip $(ARCH_NAME).zip $(BENCH_DIR)/* $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
+	@zip $(ARCH_NAME).zip $(BENCH_DIR)/* $(SRC_DIR)/* $(INCLUDE_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
 
 .PHONY: all clean small-bench small-plot report zip
 
