@@ -1,6 +1,6 @@
 # Ignore utility files and directories.
 bin/
-build
+build/
 data/
 lib/
 
