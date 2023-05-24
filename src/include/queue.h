@@ -24,7 +24,7 @@ typedef enum
 	FROZEN
 } States;
 
-/* Chunk status structure */
+/* Status structure */
 
 typedef struct Status
 {
