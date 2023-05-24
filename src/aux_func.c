@@ -2,6 +2,8 @@
 
 Chunk *init_chunk(States state, uint32_t max)
 {
+	/* Allocate chunck and init its fields */
+
 	Chunk *c = (Chunk*)malloc(sizeof(Chunk));
 
 	c->max = max;
@@ -32,6 +34,8 @@ Chunk *init_chunk(States state, uint32_t max)
 
 void create_chunk(uint32_t max)
 {
+	/* Create first chunck */
+
 	if (head == NULL)
 	{
 		Chunk *c = init_chunk(DELETE, max);
@@ -40,6 +44,8 @@ void create_chunk(uint32_t max)
 
 		return;
 	}
+
+	/* Create any other chunck */
 
 	Chunk *tail = head;
 
@@ -51,31 +57,32 @@ void create_chunk(uint32_t max)
 	Chunk *c = init_chunk(INSERT, max);
 
 	tail->next = c;
-
-	return;
 }
 
-void print_queue(Chunk *curbuf)
+void print_queue(Chunk *root)
 {
 	int i = 0;
 	int j;
 
-	Chunk *c = head;
+	Chunk *c = root;
 
-	printf("Buffer:\n\tStatus properties:\n\t\tstate = %u\n\t\tindex = %u\n\t\tfrozenInd = %u\n", 
-	       curbuf->status.state, curbuf->status.index, curbuf->status.frozenInd);
-
-	printf("\tChunk properties:\n\t\tmax = %u\n", curbuf->max);
-
-	for(j = 0; curbuf->entries[j] != 0 && j < M; j++)
+	if(c->buffer)
 	{
-		printf("\t\tentries[%d] = %lu\n", j, curbuf->entries[j]);
-	}
+		printf("Buffer:\n\tStatus properties:\n\t\tstate = %u\n\t\tindex = %u\n\t\tfrozenInd = %u\n", 
+		       c->buffer->status.state, c->buffer->status.index, c->buffer->status.frozenInd);
 
-		for (j = 0; curbuf->frozen[j] != 0 && j < M_FROZEN; j++)
+		printf("\tChunk properties:\n\t\tmax = %u\n", c->buffer->max);
+
+		for(j = 0; c->buffer->entries[j] != 0 && j < M; j++)
 		{
-			printf("\t\tfrozen[%d] = %lu\n", j, curbuf->frozen[j]);
+			printf("\t\tentries[%d] = %lu\n", j, c->buffer->entries[j]);
 		}
+
+			for (j = 0; c->buffer->frozen[j] != 0 && j < M_FROZEN; j++)
+			{
+				printf("\t\tfrozen[%d] = %lu\n", j, c->buffer->frozen[j]);
+			}
+	}
 
 	while(c)
 	{
@@ -175,8 +182,6 @@ int chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 
 bool createBuffer(int key, Chunk *cur, Chunk **curbuf)
 {
-	/* TODO */
-
 	cur->buffer = init_chunk(BUFFER, 20);
 
 	int i;

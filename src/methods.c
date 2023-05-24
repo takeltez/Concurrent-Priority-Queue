@@ -67,8 +67,48 @@ int chunk_entryFrozen(Chunk *c, int idx)
 
 void chunk_markPtrs(struct Chunk *c)
 {
-	(void) c;
+	if(c == NULL)
+	{
+		return;
+	}
 
-	/* TODO */
+	/* If we are about delete first chunck */
 
+	if (c == head)
+	{
+		head = c->next;
+
+		goto free;
+	}
+
+	/* If we are about delete buffer of first chunck */
+
+	if (c == head->buffer)
+	{
+		head->buffer = NULL;
+
+		goto free;
+	}
+
+	/* If we are about delete any other chunck */
+
+	Chunk *prev = head;
+	Chunk *next = NULL;
+
+	while(prev->next != c)
+	{
+		prev = prev->next;
+	}
+
+	if((next = prev->next->next))
+	{
+		prev->next = next;
+	}
+	else
+	{
+		prev->next = NULL;
+	}
+
+free:
+	free(c);
 }
