@@ -1,5 +1,12 @@
 # Concurrent Priority Queue
 
+## About
+Implementation of **High Performance Lock-Free Priority Queue** based on
+
+*Anastasia Braginsky, Nachshon Cohen, Erez Petrank:<br>
+CBPQ: High Performance Lock-Free Priority Queue.<br>
+Euro-Par 2016: 460-474*
+
 ## How to use
 
 ### On Host machine
