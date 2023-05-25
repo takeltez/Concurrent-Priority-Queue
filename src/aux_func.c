@@ -1,9 +1,20 @@
 #include "queue.h"
 
+/**
+ * Chunk *init_chunk(States state, uint32_t max)
+ * 
+ * Initialize new chunk fields.
+ * 
+ * Parameters:
+ * 	state - chunk state.
+ * 	max - chunk maximal possible stored key.
+ * 
+ * Returned value:
+ * 	c - pointer to the new chunk.
+ * 
+ * **/
 Chunk *init_chunk(States state, uint32_t max)
 {
-	/* Allocate chunck and init its fields */
-
 	Chunk *c = (Chunk*)malloc(sizeof(Chunk));
 
 	c->max = max;
@@ -32,10 +43,17 @@ Chunk *init_chunk(States state, uint32_t max)
 	return c;
 }
 
+/**
+ * void create_chunk(uint32_t max)
+ * 
+ * Create new chunk
+ * 
+ * Parameters:
+ * max - chunk maximal possible stored key.
+ * 
+ * **/
 void create_chunk(uint32_t max)
 {
-	/* Create first chunck */
-
 	if (head == NULL)
 	{
 		Chunk *c = init_chunk(DELETE, max);
@@ -44,8 +62,6 @@ void create_chunk(uint32_t max)
 
 		return;
 	}
-
-	/* Create any other chunck */
 
 	Chunk *tail = head;
 
@@ -59,6 +75,15 @@ void create_chunk(uint32_t max)
 	tail->next = c;
 }
 
+/**
+ * void print_queue(Chunk *root)
+ * 
+ * Print queue state
+ * 
+ * Parameters:
+ * 	root - pointer to queue head
+ * 
+ * **/
 void print_queue(Chunk *root)
 {
 	int i = 0;
@@ -132,32 +157,82 @@ void freezeRecovery(Chunk *cur, Chunk *prev)
 	/* TODO */
 }
 
-int freezeKeys(Chunk *c)
+void freezeKeys(Chunk *c)
 {
 	(void) c;
 
-	return 0;
-
 	/* TODO */
 }
 
-int getChunk(Chunk *cur, Chunk *p)
+/**
+ * bool getChunk(Chunk **cur, Chunk **prev)
+ * 
+ * Search for a required chunk in chunk list.
+ * In case such chunk was found pointer to previous chunk stored into *prev.
+ * 
+ * Parameters:
+ * 	cur - double pointer to required chunk.
+ * 	prev - double pointer to previous chunk.
+ * 
+ * Returned value:
+ * 	true - in case chunk *cur was found in chunk list.
+ * 	false - in case chunk *cur was not found in chunk list.
+ * 
+ * **/
+bool getChunk(Chunk **cur, Chunk **prev)
 {
-	(void) cur;
-	(void) p;
+	Chunk *c = head;
 
-	/* TODO */
+	if(c == *cur)
+	{
+		return true;
+	}
 
-	return 0;
+	while(c)
+	{
+		if(c->next == *cur && (*cur)->status.state == FROZEN)
+		{
+			*prev = c;
+
+			return true;
+		}
+		c = c->next;
+	}
+
+	return false;
 }
 
-void getChunk_by_key(Chunk *cur, Chunk *prev, int key)
+/**
+ * void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
+ * 
+ * Search for a decent chunk in order to store a given key.
+ * In case such chunk was found pointer to this chunk stored into *cur, and pointer to previous chunk stored into *prev.
+ * 
+ * Parameters:
+ * 	cur - double pointer on chunk for store given key.
+ * 	prev - double pointer on previous chunk.
+ * 
+ * **/
+void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
 {
-	(void) cur;
-	(void) prev;
-	(void) key;
+	*cur = head;
 
-	/* TODO */
+	if((*cur)->max >= (uint32_t)key)
+	{
+		return;
+	}
+
+	while(*cur)
+	{
+		if((*cur)->next->max >= (uint32_t)key)
+		{
+			break;
+		}
+		*cur = (*cur)->next;
+	}
+
+	*prev = *cur;
+	*cur = (*prev)->next;
 }
 
 void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
@@ -169,7 +244,7 @@ void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
 	/* TODO */
 }
 
-int chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
+bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 {
 	(void) c;
 	(void) cur;
@@ -177,43 +252,76 @@ int chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 
 	/* TODO */
 
-	return 0;
+	return true;
 }
 
-bool createBuffer(int key, Chunk *cur, Chunk **curbuf)
+/**
+ * bool createBuffer(int key, Chunk *c, Chunk **buf)
+ * 
+ * Create buffer for the first chunk, add key into this buffer and store pointer to this buffer into *buf.
+ * 
+ * Parameters:
+ * 	key - key to be added into buffer.
+ * 	c - pointer on the first chunk.
+ * 	buf -double pointer to the buffer
+ * 
+ * Returned value:
+ * 	true - the new buffer was successfully connected to the first chunk.
+ * 	false - another thread had connected another buffer.
+ * 
+ * **/
+bool createBuffer(int key, Chunk *c, Chunk **buf)
 {
-	cur->buffer = init_chunk(BUFFER, 20);
+	/**
+	 * As follows from description this function still isn't finished.
+	 * Need to figure out the case for return false value.
+	 * 
+	 * **/
+
+	c->buffer = init_chunk(BUFFER, 20);
 
 	int i;
 
-	for(i = 0; cur->buffer->entries[i] != 0 && i < M; i++);
+	for(i = 0; c->buffer->entries[i] != 0 && i < M; i++);
 
-	cur->buffer->entries[i] = key;
+	c->buffer->entries[i] = key;
 
-	*curbuf = cur->buffer;
+	*buf = c->buffer;
 
 	return true;
 }
 
+/**
+ * int getIdx(Status s)
+ * 
+ * Get chunk status index.
+ * 
+ * Parameters:
+ * 	s - chunk status.
+ * 
+ * Returned value:
+ * 	s.index - chunk status index.
+ * 
+ * **/
 int getIdx(Status s)
 {
 	return s.index;
 }
 
-Chunk *split(Chunk *cur)
+Chunk *split(Chunk *c)
 {
-	(void) cur;
+	(void) c;
 
 	/* TODO */
 
-	return cur;
+	return c;
 }
 
-Chunk *mergeFirstChunk(Chunk *cur)
+Chunk *mergeFirstChunk(Chunk *c)
 {
-	(void) cur;
+	(void) c;
 
 	/* TODO */
 
-	return cur;
+	return c;
 }
