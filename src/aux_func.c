@@ -190,7 +190,7 @@ bool getChunk(Chunk **cur, Chunk **prev)
 
 	while(c)
 	{
-		if(c->next == *cur && (*cur)->status.state == FROZEN)
+		if(c->next == *cur)
 		{
 			*prev = c;
 
