@@ -6,11 +6,11 @@
  * Initialize new chunk fields.
  * 
  * Parameters:
- * 	state - chunk state.
- * 	max - chunk maximal possible stored key.
+ * 	@state - chunk state.
+ * 	@max - chunk maximal possible stored key.
  * 
  * Returned value:
- * 	c - pointer to the new chunk.
+ * 	@c - pointer to the new chunk.
  * 
  * **/
 Chunk *init_chunk(States state, uint32_t max)
@@ -49,7 +49,7 @@ Chunk *init_chunk(States state, uint32_t max)
  * Create new chunk
  * 
  * Parameters:
- * max - chunk maximal possible stored key.
+ * 	@max - chunk maximal possible stored key.
  * 
  * **/
 void create_chunk(uint32_t max)
@@ -81,7 +81,7 @@ void create_chunk(uint32_t max)
  * Print queue state
  * 
  * Parameters:
- * 	root - pointer to queue head
+ * 	@root - pointer to queue head
  * 
  * **/
 void print_queue(Chunk *root)
@@ -171,12 +171,12 @@ void freezeKeys(Chunk *c)
  * In case such chunk was found pointer to previous chunk stored into *prev.
  * 
  * Parameters:
- * 	cur - double pointer to required chunk.
- * 	prev - double pointer to previous chunk.
+ * 	@cur - double pointer to required chunk.
+ * 	@prev - double pointer to previous chunk.
  * 
  * Returned value:
- * 	true - in case chunk *cur was found in chunk list.
- * 	false - in case chunk *cur was not found in chunk list.
+ * 	@true - in case chunk *cur was found in chunk list.
+ * 	@false - in case chunk *cur was not found in chunk list.
  * 
  * **/
 bool getChunk(Chunk **cur, Chunk **prev)
@@ -209,8 +209,8 @@ bool getChunk(Chunk **cur, Chunk **prev)
  * In case such chunk was found pointer to this chunk stored into *cur, and pointer to previous chunk stored into *prev.
  * 
  * Parameters:
- * 	cur - double pointer on chunk for store given key.
- * 	prev - double pointer on previous chunk.
+ * 	@cur - double pointer on chunk for store given key.
+ * 	@prev - double pointer on previous chunk.
  * 
  * **/
 void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
@@ -261,13 +261,13 @@ bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
  * Create buffer for the first chunk, add key into this buffer and store pointer to this buffer into *buf.
  * 
  * Parameters:
- * 	key - key to be added into buffer.
- * 	c - pointer on the first chunk.
- * 	buf -double pointer to the buffer
+ * 	@key - key to be added into buffer.
+ * 	@c - pointer on the first chunk.
+ * 	@buf -double pointer to the buffer
  * 
  * Returned value:
- * 	true - the new buffer was successfully connected to the first chunk.
- * 	false - another thread had connected another buffer.
+ * 	@true - the new buffer was successfully connected to the first chunk.
+ * 	@false - another thread had connected another buffer.
  * 
  * **/
 bool createBuffer(int key, Chunk *c, Chunk **buf)
@@ -297,10 +297,10 @@ bool createBuffer(int key, Chunk *c, Chunk **buf)
  * Get chunk status index.
  * 
  * Parameters:
- * 	s - chunk status.
+ * 	@s - chunk status.
  * 
  * Returned value:
- * 	s.index - chunk status index.
+ * 	@s.index - chunk status index.
  * 
  * **/
 int getIdx(Status s)

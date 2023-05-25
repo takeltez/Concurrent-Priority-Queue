@@ -15,11 +15,11 @@ Status status_aIncIdx(Status *s)
  * Check either current chunk state is FREEZING or not.
  * 
  * Parameters;
- * 	s - chunk status.
+ * 	@s - chunk status.
  * 
  * Returned value:
- * 	true -  current chunk state is FREEZING.
- * 	false - current chunk state is not FREEZING.
+ * 	@true -  current chunk state is FREEZING.
+ * 	@false - current chunk state is not FREEZING.
  * 
  * **/
 bool status_isInFreeze(Status *s)
@@ -33,10 +33,10 @@ bool status_isInFreeze(Status *s)
  * Get chunk status index.
  * 
  * Parameters:
- * 	s - pointer on chunk status.
+ * 	@s - pointer on chunk status.
  * 
  * Returned value:
- * 	s->index - chunk status index.
+ * 	@s->index - chunk status index.
  * 
  * **/
 int status_getIdx(Status *s)
@@ -69,10 +69,10 @@ void status_aOr(struct Status *s, int mask)
  * Set chunk status fields.
  * 
  * Parameters:
- * 	s - pointer to chunck status.
- * 	state - chucnk status state.
- * 	idx - chunk status index.
- * 	frozenIdx - chunk status frozen index.
+ * 	@s - pointer to chunck status.
+ * 	@state - chucnk status state.
+ * 	@idx - chunk status index.
+ * 	@frozenIdx - chunk status frozen index.
  * 
  * **/
 void status_set(Status *s, States state, int idx, int frozenInd)
@@ -88,10 +88,10 @@ void status_set(Status *s, States state, int idx, int frozenInd)
  * Get chunk status state.
  * 
  * Parameters:
- * 	s - pointer on chunk status.
+ * 	@s - pointer on chunk status.
  * 
  * Returned value:
- * 	s->state - chunk status state.
+ * 	@s->state - chunk status state.
  * 
  * **/
 States status_getState(Status *s)
@@ -105,12 +105,12 @@ States status_getState(Status *s)
  * Check either chunk key is frozen or not.
  * 
  * Paramerers:
- * 	c - pointer to the chunk
- * 	idx - index of frozen array.
+ * 	@c - pointer to the chunk.
+ * 	@idx - index of frozen array.
  * 
  * Returned value:
- * 	true - if element frozen[idx] contains key.
- * 	false - if element frozen[idx] doesn't contains key.
+ * 	@true - if element frozen[idx] contains key.
+ * 	@false - if element frozen[idx] doesn't contains key.
  * 
  * **/
 bool chunk_entryFrozen(Chunk *c, int idx)
@@ -129,7 +129,7 @@ bool chunk_entryFrozen(Chunk *c, int idx)
  * Delete chunk from queue.
  * 
  * Parameters:
- * 	c - pointer to chunk for deletion.
+ * 	@c - pointer to chunk for deletion.
  * 
  * **/
 void chunk_markPtrs(struct Chunk *c)
