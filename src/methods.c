@@ -9,17 +9,42 @@ Status status_aIncIdx(Status *s)
 	return *s;
 }
 
-int status_isInFreeze(Status *s)
+/**
+ * int status_isInFreeze(Status *s)
+ * 
+ * Check either current chunk state is FREEZING or not.
+ * 
+ * Parameters;
+ * 	s - chunk status.
+ * 
+ * Returned value:
+ * 	true -  current chunk state is FREEZING.
+ * 	false - current chunk state is not FREEZING.
+ * 
+ * **/
+bool status_isInFreeze(Status *s)
 {
-	return (s->state == FREEZING) ? 1 : 0;
+	return (s->state == FREEZING) ? true : false;
 }
 
+/**
+ * int status_getIdx(Status *s)
+ * 
+ * Get chunk status index.
+ * 
+ * Parameters:
+ * 	s - pointer on chunk status.
+ * 
+ * Returned value:
+ * 	s->index - chunk status index.
+ * 
+ * **/
 int status_getIdx(Status *s)
 {
 	return s->index;
 }
 
-int status_CAS(struct Status *s, struct Status localS, struct Status newS)
+bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
 {
 	(void) s;
 	(void) localS;
@@ -27,7 +52,7 @@ int status_CAS(struct Status *s, struct Status localS, struct Status newS)
 
 	/* TODO */
 
-	return 0;
+	return true;
 }
 
 void status_aOr(struct Status *s, int mask)
@@ -38,6 +63,18 @@ void status_aOr(struct Status *s, int mask)
 	/* TODO */
 }
 
+/**
+ * void status_set(Status *s, States state, int idx, int frozenInd)
+ * 
+ * Set chunk status fields.
+ * 
+ * Parameters:
+ * 	s - pointer to chunck status.
+ * 	state - chucnk status state.
+ * 	idx - chunk status index.
+ * 	frozenIdx - chunk status frozen index.
+ * 
+ * **/
 void status_set(Status *s, States state, int idx, int frozenInd)
 {
 	s->state = state;
@@ -45,34 +82,62 @@ void status_set(Status *s, States state, int idx, int frozenInd)
 	s->frozenInd = frozenInd;
 }
 
+/**
+ * States status_getState(Status *s)
+ * 
+ * Get chunk status state.
+ * 
+ * Parameters:
+ * 	s - pointer on chunk status.
+ * 
+ * Returned value:
+ * 	s->state - chunk status state.
+ * 
+ * **/
 States status_getState(Status *s)
 {
 	return s->state;
 }
 
-int chunk_entryFrozen(Chunk *c, int idx)
+/**
+ * bool chunk_entryFrozen(Chunk *c, int idx)
+ * 
+ * Check either chunk key is frozen or not.
+ * 
+ * Paramerers:
+ * 	c - pointer to the chunk
+ * 	idx - index of frozen array.
+ * 
+ * Returned value:
+ * 	true - if element frozen[idx] contains key.
+ * 	false - if element frozen[idx] doesn't contains key.
+ * 
+ * **/
+bool chunk_entryFrozen(Chunk *c, int idx)
 {
-	int i;
-
-	for(i = 0; i < M_FROZEN; i ++)
+	if(c->frozen[idx] != 0)
 	{
-		if(c->frozen[i] == (uint64_t)idx)
-		{
-			return 1;
-		}
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
+/**
+ * void chunk_markPtrs(struct Chunk *c)
+ * 
+ * Delete chunk from queue.
+ * 
+ * Parameters:
+ * 	c - pointer to chunk for deletion.
+ * 
+ * **/
 void chunk_markPtrs(struct Chunk *c)
 {
 	if(c == NULL)
 	{
 		return;
 	}
-
-	/* If we are about delete first chunck */
 
 	if (c == head)
 	{
@@ -81,16 +146,12 @@ void chunk_markPtrs(struct Chunk *c)
 		goto free;
 	}
 
-	/* If we are about delete buffer of first chunck */
-
 	if (c == head->buffer)
 	{
 		head->buffer = NULL;
 
 		goto free;
 	}
-
-	/* If we are about delete any other chunck */
 
 	Chunk *prev = head;
 	Chunk *next = NULL;
