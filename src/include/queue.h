@@ -62,7 +62,7 @@ extern Chunk *head;
 
 /* Main functions */
 
-void instert(int key);
+void insert(int key);
 int deleteMin(void);
 
 /* Auxiliary functions */
@@ -72,7 +72,7 @@ void create_chunk(uint32_t max);
 void print_queue(Chunk *root);
 
 bool insertToBuffer(int key, Chunk *cur, Chunk *curhead);
-void freezeCunck(Chunk *c);
+void freezeChunk(Chunk *c);
 void freezeRecovery(Chunk *cur, Chunk *prev);
 void freezeKeys(Chunk *c);
 

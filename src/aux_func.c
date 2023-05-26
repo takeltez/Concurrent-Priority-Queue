@@ -137,12 +137,29 @@ bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
 	(void) cur;
 	(void) curhead;
 
+	// PHASE I: key insertion into the buffer
+	Chunk *curbuf = cur->buffer;
+	bool result = false;
+
+	// the buffer is not yet allocated
+	if(curbuf == NULL) { 
+
+		printf("Buffer not yet allocated %d\n", result);
+
+		// key added during buffer creation
+		if(createBuffer(key, cur, &curbuf)) goto phaseII;
+	}
+
+phaseII:
+	printf("Phase II\n");
+	usleep(0);
+	
 	/* TODO */
 
 	return true;
 }
 
-void freezeCunck(Chunk *c)
+void freezeChunk(Chunk *c)
 {
 	(void) c;
 
