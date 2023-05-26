@@ -9,8 +9,7 @@ Euro-Par 2016: 460-474*
 
 ## How to use
 
-### On Host machine
-Pre-requirements:
+### Pre-requirements
 - GNU Compiler: `gcc`
 - GNU Make: `make`
 - Python version at least 3.6: `python3`

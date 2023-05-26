@@ -131,7 +131,7 @@ void print_queue(Chunk *root)
 	}
 }
 
-bool instertToBuffer(int key, Chunk *cur, Chunk *curhead)
+bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
 {
 	(void) key;
 	(void) cur;

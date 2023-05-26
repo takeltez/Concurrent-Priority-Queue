@@ -71,7 +71,7 @@ Chunk *init_chunk(States state, uint32_t max);
 void create_chunk(uint32_t max);
 void print_queue(Chunk *root);
 
-bool instertToBuffer(int key, Chunk *cur, Chunk *curhead);
+bool insertToBuffer(int key, Chunk *cur, Chunk *curhead);
 void freezeCunck(Chunk *c);
 void freezeRecovery(Chunk *cur, Chunk *prev);
 void freezeKeys(Chunk *c);
