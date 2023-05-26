@@ -153,6 +153,7 @@ bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
 phaseII:
 	printf("Phase II\n");
 	usleep(0);
+	freezeChunk(cur);
 	
 	/* TODO */
 
@@ -162,6 +163,13 @@ phaseII:
 void freezeChunk(Chunk *c)
 {
 	(void) c;
+
+	int idx, frozenIdx = 0;
+	Status localS;
+
+	while(true) {
+
+	}
 
 	/* TODO */
 }
