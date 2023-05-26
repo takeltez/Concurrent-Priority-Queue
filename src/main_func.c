@@ -2,9 +2,26 @@
 
 Chunk *head = NULL;
 
-void instert(int key)
+void insert(int key)
 {
 	(void) key;
+
+	// Create pointers to current and previous chunks
+	Chunk *cur = NULL;
+	Chunk *prev = NULL;
+
+	while(true) {
+
+		// Set the current and previous chunk pointers
+		getChunk_by_key(&cur, &prev, key);
+
+		// If it is the first chunk, insert in the buffer instead
+		if(cur == head) {
+			printf("Head\n");
+
+			//insertToBuffer
+		}
+	}
 
 	/* TODO */
 }
