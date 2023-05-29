@@ -154,6 +154,7 @@ phaseII:
 	printf("Phase II\n");
 	usleep(0);
 	freezeChunk(cur);
+	freezeRecovery(cur, NULL);
 	
 	/* TODO */
 
@@ -162,16 +163,67 @@ phaseII:
 
 void freezeChunk(Chunk *c)
 {
-	(void) c;
+	//(void) c;
 
 	int idx, frozenIdx = 0;
+
+	// locally copied status
 	Status localS;
 
+	// PHASE I: set the chunk status if needed
 	while(true) {
 
+		// read the current status to get its state and index
+		localS = c->status;
+		idx = localS.getIdx(&localS);
+
+		switch (localS.getState(&localS)) {
+
+			case BUFFER: 
+			// in insert or buffer chunks frozenIdx was and remained 0
+
+			case INSERT:
+				c->status.aOr(&c->status, MASK_FREEZING_STATE);
+				break;
+
+			case DELETE:
+				if (idx > M) {
+					frozenIdx = M;
+				} else {
+					frozenIdx = idx;
+				}
+
+				// set: state, index, frozen index
+				Status newS;
+				newS.set(&newS, FREEZING, idx, frozenIdx);
+
+				// can fail due to delete updating the index
+				if(c->status.CAS(&c->status, localS, newS)) break;
+				else continue;
+
+			// in process of being freezed
+			case FREEZING: 
+				break;
+
+			// c was frozen by someone else
+			case FROZEN:
+				c->markPtrs(c);
+				return;
+
+		}
+		break; // continue only if CAS from DELETE state failed
 	}
 
-	/* TODO */
+	//PHASE II: freeze the entries
+	if(c != head) {
+		freezeKeys(c);
+	}
+
+	// from FREEZING to FROZEN using atomic OR
+	c->status.aOr(&c->status, MASK_FROZEN_STATE);
+
+	// set the chunk pointers as deleted
+	c->markPtrs(c);
 }
 
 void freezeRecovery(Chunk *cur, Chunk *prev)
@@ -331,6 +383,35 @@ bool createBuffer(int key, Chunk *c, Chunk **buf)
 int getIdx(Status s)
 {
 	return s.index;
+}
+
+
+States getState(Status s)
+{
+	return s.state;
+}
+
+void aOr(Status s, int mask) 
+{
+
+	int state = s.state;
+
+	int res_or =__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
+	printf("%d\n", res_or);
+}
+
+bool CAS(Status *s, Status localS, Status newS)
+{
+
+
+	/*This compares the contents of *ptr with the contents 
+	of *expected. If equal, the operation is a 
+	read-modify-write operation that writes desired into *ptr. 
+	If they are not equal, the operation is a read and the 
+	current contents of *ptr are written into *expected.*/
+	int res3 = __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	printf("%d\n", res3);
+	return true;
 }
 
 Chunk *split(Chunk *c)

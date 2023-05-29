@@ -13,6 +13,8 @@
 #define M 928
 #define M_FROZEN (M / 63 + 1)
 #define MAX_CHUNKS 3
+#define MASK_FREEZING_STATE 1
+#define MASK_FROZEN_STATE 2
 
 /* Chunk states */
 
@@ -81,9 +83,13 @@ void getChunk_by_key(Chunk **cur, Chunk **prev, int key);
 
 void key_CAS(uint64_t *mem, uint64_t old, uint64_t new);
 bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local);
+bool CAS(Status *s, Status localS, Status newS);
 
 bool createBuffer(int key, Chunk *c, Chunk **curbuf);
 int getIdx(Status s);
+States getState(Status s);
+
+void aOr(Status s, int mask);
 
 Chunk *split(Chunk *cur);
 Chunk *mergeFirstChunk(Chunk *cur);
