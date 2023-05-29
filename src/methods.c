@@ -4,6 +4,7 @@ Status status_aIncIdx(Status *s)
 {
 	(void) s;
 
+	__atomic_fetch_add (&s->index, 1, __ATOMIC_RELEASE);
 	/* TODO */
 
 	return *s;

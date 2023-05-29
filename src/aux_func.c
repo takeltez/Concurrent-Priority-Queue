@@ -150,6 +150,22 @@ bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
 		if(createBuffer(key, cur, &curbuf)) goto phaseII;
 	}
 
+	// atomically increase the index in the status
+	Status s = curbuf->status.aIncIdx(&s);
+
+	int idx = getIdx(s);
+	printf("%d\n", idx);
+
+	if(idx<M && !s.isInFreeze(&s)) {
+		curbuf->entries[idx] = key;
+
+		/*TO DO: MEMORY FENCE!!!!!*/
+
+		if(!curbuf->status.isInFreeze(&curbuf->status)) result = true;
+		if(curbuf->entryFrozen(curbuf, idx)) return true;
+
+	}
+
 phaseII:
 	printf("Phase II\n");
 	usleep(0);
@@ -158,7 +174,7 @@ phaseII:
 	
 	/* TODO */
 
-	return true;
+	return result;
 }
 
 void freezeChunk(Chunk *c)
@@ -231,7 +247,65 @@ void freezeRecovery(Chunk *cur, Chunk *prev)
 	(void) cur;
 	(void) prev;
 
-	/* TODO */
+	bool toSplit = true;
+	Chunk *local = NULL, *p = NULL;
+
+	// PHASE I: decide whether to split or to merge
+	while(true) {
+
+		if(cur == head || (prev == head && prev->status.isInFreeze(&prev->status))) {
+			toSplit = false;
+		}
+
+		//PHASE II: in split, if prev is frozen, recover it first
+		if(toSplit && prev->status.isInFreeze(&prev->status)) {
+
+			freezeChunk(prev);// ensure prev freeze is done
+
+			// search the previous to prev
+			if(getChunk(&prev, &p)) {
+
+				// the frozen prev found, p precedes prev; recursive recovery
+				freezeRecovery(prev, p);
+			}
+
+			// prev is already not in the list; re−search the current chunk and find its new predecessor
+			if(!getChunk(&cur, &p)) return; // the frozen cur is not in the list
+			else {
+				prev = p;
+				continue;
+			}
+
+		}
+
+		// PHASE III: apply the decision locally
+		if(toSplit) {
+
+			// STILL MISSING THE IMPLEMENTATION OF SPLIT!!!!!!
+			local = split(cur);
+		} else {
+
+			// STILL MISSING THE IMPLEMENTATION OF MERGEFIRSTCHUNK!!!!!!
+			local = mergeFirstChunk(cur);
+		}
+
+		// PHASE IV: change the PQ accordingly to the previous decision
+		if(toSplit) {
+			if(chunk_CAS(&prev->next, cur, local)) return;
+		} else { // when modifying the head, check if cur second or first
+			if (prev == NULL) {
+				if(chunk_CAS(&head, cur, local)) return;
+				else if(chunk_CAS(&head, prev, local)) return;
+			}
+		}
+
+		// look for new location; finish if the frozen cur is not found
+		if(!getChunk(&cur, &p)) return;
+		else prev = p;
+
+	}
+	printf("%d\n", toSplit);
+	//printf("%d\n", local->status->state);
 }
 
 void freezeKeys(Chunk *c)
@@ -326,6 +400,15 @@ bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 	(void) c;
 	(void) cur;
 	(void) local;
+
+	/*This compares the contents of *ptr with the contents 
+	of *expected. If equal, the operation is a 
+	read-modify-write operation that writes desired into *ptr. 
+	If they are not equal, the operation is a read and the 
+	current contents of *ptr are written into *expected.*/
+	int res3 = __atomic_compare_exchange_n(c, local, cur, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	printf("%d\n", res3);
+	return true;
 
 	/* TODO */
 
