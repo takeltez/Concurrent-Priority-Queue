@@ -133,8 +133,8 @@ void print_queue(Chunk *root)
 
 bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
 {
-	(void) key;
-	(void) cur;
+	//(void) key;
+	//(void) cur;
 	(void) curhead;
 
 	// PHASE I: key insertion into the buffer
@@ -171,8 +171,6 @@ phaseII:
 	usleep(0);
 	freezeChunk(cur);
 	freezeRecovery(cur, NULL);
-	
-	/* TODO */
 
 	return result;
 }
@@ -244,8 +242,8 @@ void freezeChunk(Chunk *c)
 
 void freezeRecovery(Chunk *cur, Chunk *prev)
 {
-	(void) cur;
-	(void) prev;
+	//(void) cur;
+	//(void) prev;
 
 	bool toSplit = true;
 	Chunk *local = NULL, *p = NULL;
@@ -397,9 +395,9 @@ void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
 
 bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 {
-	(void) c;
-	(void) cur;
-	(void) local;
+	//(void) c;
+	//(void) cur;
+	//(void) local;
 
 	/*This compares the contents of *ptr with the contents 
 	of *expected. If equal, the operation is a 
@@ -408,10 +406,7 @@ bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 	current contents of *ptr are written into *expected.*/
 	int res3 = __atomic_compare_exchange_n(c, local, cur, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 	printf("%d\n", res3);
-	return true;
-
-	/* TODO */
-
+	
 	return true;
 }
 
@@ -474,28 +469,21 @@ States getState(Status s)
 	return s.state;
 }
 
-void aOr(Status s, int mask) 
+/*void aOr(Status s, int mask) 
 {
 
 	int state = s.state;
 
 	int res_or =__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
 	printf("%d\n", res_or);
-}
+}*/
 
-bool CAS(Status *s, Status localS, Status newS)
+/*bool CAS(Status *s, Status localS, Status newS)
 {
-
-
-	/*This compares the contents of *ptr with the contents 
-	of *expected. If equal, the operation is a 
-	read-modify-write operation that writes desired into *ptr. 
-	If they are not equal, the operation is a read and the 
-	current contents of *ptr are written into *expected.*/
 	int res3 = __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 	printf("%d\n", res3);
 	return true;
-}
+}*/
 
 Chunk *split(Chunk *c)
 {
