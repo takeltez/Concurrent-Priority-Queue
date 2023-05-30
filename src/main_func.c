@@ -22,9 +22,27 @@ void insert(int key)
 			if(insertToBuffer(key, cur, head)) return;
 			else continue;
 		}
-	}
 
-	/* TODO */
+		Status s = cur->status.aIncIdx(&s);
+		int idx = getIdx(s);
+
+		// insert into a non-full and non-frozen chunk
+		if(idx<M && !s.isInFreeze(&s)) {
+
+			cur->entries[idx] = key;
+
+			#pragma omp barrier
+
+			if(!cur->status.isInFreeze(&cur->status)) return;
+
+			if(!cur->entryFrozen(cur, idx)) return; // key got copied
+
+		}
+
+		// restructure the CBQP, then retry
+		freezeChunk(cur);
+		freezeRecovery(cur, prev);
+	}
 }
 
 int deleteMin(void)

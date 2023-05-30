@@ -5,19 +5,26 @@ int main(int argc, const char **argv)
 	(void) argc;
 	(void) argv;
 
-	int i, max;
+	omp_set_num_threads(4);
 
-	for(i = 0, max = 20; i < MAX_CHUNKS; max += 20, i++)
+	#pragma omp parallel
 	{
-		if (i == MAX_CHUNKS - 1)
+		int i, max;
+
+		for(i = 0, max = 20; i < MAX_CHUNKS; max += 20, i++)
 		{
-			create_chunk(UINT32_MAX);
+			if (i == MAX_CHUNKS - 1)
+			{
+				create_chunk(UINT32_MAX);
+			}
+			else
+				create_chunk(max);
 		}
-		else
-			create_chunk(max);
+
+		print_queue(head);
 	}
 
-	print_queue(head);
+	
 
 	return 0;
 }

@@ -160,6 +160,7 @@ bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
 		curbuf->entries[idx] = key;
 
 		/*TO DO: MEMORY FENCE!!!!!*/
+		#pragma omp barrier
 
 		if(!curbuf->status.isInFreeze(&curbuf->status)) result = true;
 		if(curbuf->entryFrozen(curbuf, idx)) return true;
@@ -406,7 +407,7 @@ bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 	current contents of *ptr are written into *expected.*/
 	int res3 = __atomic_compare_exchange_n(c, local, cur, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 	printf("%d\n", res3);
-	
+
 	return true;
 }
 
