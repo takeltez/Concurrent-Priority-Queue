@@ -2,10 +2,9 @@
 
 Status status_aIncIdx(Status *s)
 {
-	(void) s;
+	//(void) s;
 
 	__atomic_fetch_add (&s->index, 1, __ATOMIC_RELEASE);
-	/* TODO */
 
 	return *s;
 }
@@ -47,21 +46,26 @@ int status_getIdx(Status *s)
 
 bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
 {
-	(void) s;
-	(void) localS;
-	(void) newS;
+	//(void) s;
+	//(void) localS;
+	//(void) newS;
 
 	/* TODO */
+	int res3 = __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	printf("%d\n", res3);
 
 	return true;
 }
 
 void status_aOr(struct Status *s, int mask)
 {
-	(void) s;
-	(void) mask;
+	//(void) s;
+	//(void) mask;
 
-	/* TODO */
+	int state = s->state;
+
+	int res_or =__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
+	printf("%d\n", res_or);
 }
 
 /**

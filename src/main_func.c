@@ -19,7 +19,8 @@ void insert(int key)
 		if(cur == head) {
 			printf("Head\n");
 
-			//insertToBuffer
+			if(insertToBuffer(key, cur, head)) return;
+			else continue;
 		}
 	}
 
