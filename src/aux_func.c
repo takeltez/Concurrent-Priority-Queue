@@ -247,7 +247,7 @@ void freezeChunk(Chunk *c)
 				}
 
 			// in process of being freezed
-			case FREEZING: 
+			case FREEZING:
 				break;
 
 			// c was frozen by someone else
@@ -444,7 +444,7 @@ void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
  * void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
  * 
  * Compare value stored in 'mem' with value 'old'.
- * In case they are equal, update memory location 'mem' with value 'new'.
+ * If equal, update memory location 'mem' with value 'new'.
  * Otherwise, copy value from 'mem' into 'old'.
  * 
  * Parameters:
@@ -462,7 +462,7 @@ void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
  * bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
  * 
  * Compare chunk 'c' with chunk 'cur'.
- * In case they are equal, chunk 'local' updates chunk 'c'.
+ * If equal, chunk 'local' updates chunk 'c'.
  * Otherwise, chunk 'c' updates chunk 'cur'.
  * 
  * Parameters:
