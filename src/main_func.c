@@ -2,41 +2,58 @@
 
 Chunk *head = NULL;
 
+/**
+ * void insert(int key)
+ * 
+ * Insert key into queue.
+ * 
+ * Parameters:
+ * 	@key - key to insert.
+ * 
+ * **/
 void insert(int key)
 {
-	(void) key;
-
 	// Create pointers to current and previous chunks
 	Chunk *cur = NULL;
 	Chunk *prev = NULL;
 
-	while(true) {
-
+	while(true)
+	{
 		// Set the current and previous chunk pointers
 		getChunk_by_key(&cur, &prev, key);
 
 		// If it is the first chunk, insert in the buffer instead
-		if(cur == head) {
-			printf("Head\n");
-
-			if(insertToBuffer(key, cur, head)) return;
-			else continue;
+		if(cur == head)
+		{
+			if(insertToBuffer(key, cur))
+			{
+				return;
+			}
+			else
+			{
+				continue;
+			}
 		}
 
-		Status s = cur->status.aIncIdx(&s);
+		Status s = cur->status.aIncIdx(&cur->status);
 		int idx = getIdx(s);
 
 		// insert into a non-full and non-frozen chunk
-		if(idx<M && !s.isInFreeze(&s)) {
-
+		if(idx < M && !s.isInFreeze(&s))
+		{
 			cur->entries[idx] = key;
 
 			#pragma omp barrier
 
-			if(!cur->status.isInFreeze(&cur->status)) return;
+			if(!cur->status.isInFreeze(&cur->status))
+			{
+				return;
+			}
 
-			if(!cur->entryFrozen(cur, idx)) return; // key got copied
-
+			if(!cur->entryFrozen(cur, idx))
+			{
+				return; // key got copied
+			}
 		}
 
 		// restructure the CBQP, then retry
@@ -45,9 +62,35 @@ void insert(int key)
 	}
 }
 
+/**
+ * int deleteMin(void)
+ * 
+ * Delete key with higher priority from queue.
+ * 
+ * Returned value:
+ * 	@cur->entries[idx] - index of removed key.
+ * 
+ * **/
 int deleteMin(void)
 {
-	/* TODO */
+	Chunk *cur;
+	Status s;
+	int idx;
+
+	while(1)
+	{
+		cur = head;
+		s = cur->status.aIncIdx(&cur->status);
+		idx = getIdx(s);
+
+		if(idx < M && !s.isInFreeze(&s))
+		{
+			return cur->entries[idx];
+		}
+
+		freezeChunk(cur);
+		freezeRecovery(cur, NULL);
+	}
 
 	return 0;
 }
