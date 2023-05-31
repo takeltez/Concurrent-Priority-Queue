@@ -1,10 +1,20 @@
 #include "queue.h"
 
+/**
+ * Status status_aIncIdx(Status *s)
+ * 
+ * Increase status index.
+ * 
+ * Parameters:
+ * 	@s - pointer to Status structure.
+ * 
+ * Returned value:
+ * 	@s - Status structure with new index.
+ * 
+ * **/
 Status status_aIncIdx(Status *s)
 {
-	//(void) s;
-
-	__atomic_fetch_add (&s->index, 1, __ATOMIC_RELEASE);
+	__atomic_fetch_add(&s->index, 1, __ATOMIC_RELEASE);
 
 	return *s;
 }
@@ -44,28 +54,43 @@ int status_getIdx(Status *s)
 	return s->index;
 }
 
+/**
+ * bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
+ * 
+ * Comapre status 's' with status 'localS'.
+ * If equal, replace value stored in 's' with value 'newS'.
+ * Otherwise, replace value stored in 'localS' with value stored in 's'.
+ * 
+ * Parameters:
+ * 	@s - pointer to Status structure which is supposed to be updated.
+ * 	@localS - Status structure which compare 's' with.
+ * 	@newS - Status structure which should update 's'.
+ * 
+ * Returned value:
+ * 	@true - if statuses 's' and 'localS' equal.
+ * 	@false - otherwise.
+ * 
+ * **/
 bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
 {
-	//(void) s;
-	//(void) localS;
-	//(void) newS;
-
-	/* TODO */
-	int res3 = __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-	printf("%d\n", res3);
-
-	return true;
+	return __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
+/**
+ * void status_aOr(struct Status *s, int mask)
+ * 
+ * Make binary 'or' operation to switch between states.
+ * 
+ * Parameters:
+ * 	@s - pointer to Status structure
+ * 	@mask - mask to change state with.
+ * 
+ * **/
 void status_aOr(struct Status *s, int mask)
 {
-	//(void) s;
-	//(void) mask;
-
 	int state = s->state;
 
-	int res_or =__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
-	printf("%d\n", res_or);
+	__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
 }
 
 /**

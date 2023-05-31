@@ -73,7 +73,7 @@ Chunk *init_chunk(States state, uint32_t max);
 void create_chunk(uint32_t max);
 void print_queue(Chunk *root);
 
-bool insertToBuffer(int key, Chunk *cur, Chunk *curhead);
+bool insertToBuffer(int key, Chunk *cur);
 void freezeChunk(Chunk *c);
 void freezeRecovery(Chunk *cur, Chunk *prev);
 void freezeKeys(Chunk *c);
@@ -83,13 +83,9 @@ void getChunk_by_key(Chunk **cur, Chunk **prev, int key);
 
 void key_CAS(uint64_t *mem, uint64_t old, uint64_t new);
 bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local);
-bool CAS(Status *s, Status localS, Status newS);
 
 bool createBuffer(int key, Chunk *c, Chunk **curbuf);
 int getIdx(Status s);
-States getState(Status s);
-
-void aOr(Status s, int mask);
 
 Chunk *split(Chunk *cur);
 Chunk *mergeFirstChunk(Chunk *cur);

@@ -46,7 +46,7 @@ Chunk *init_chunk(States state, uint32_t max)
 /**
  * void create_chunk(uint32_t max)
  * 
- * Create new chunk
+ * Create new chunk.
  * 
  * Parameters:
  * 	@max - chunk maximal possible stored key.
@@ -54,7 +54,7 @@ Chunk *init_chunk(States state, uint32_t max)
  * **/
 void create_chunk(uint32_t max)
 {
-	if (head == NULL)
+	if(head == NULL)
 	{
 		Chunk *c = init_chunk(DELETE, max);
 
@@ -65,7 +65,7 @@ void create_chunk(uint32_t max)
 
 	Chunk *tail = head;
 
-	while (tail->next)
+	while(tail->next)
 	{
 		tail = tail->next;
 	}
@@ -78,10 +78,10 @@ void create_chunk(uint32_t max)
 /**
  * void print_queue(Chunk *root)
  * 
- * Print queue state
+ * Print queue state.
  * 
  * Parameters:
- * 	@root - pointer to queue head
+ * 	@root - pointer to queue head.
  * 
  * **/
 void print_queue(Chunk *root)
@@ -131,44 +131,58 @@ void print_queue(Chunk *root)
 	}
 }
 
-bool insertToBuffer(int key, Chunk *cur, Chunk *curhead)
+/**
+ * bool insertToBuffer(int key, Chunk *cur)
+ * 
+ * Insert key to buffer.
+ * 
+ * Parameters:
+ * @key - key to insert.
+ * @cur - pointer to the first chunk.
+ * 
+ * Returned value:
+ * @true - key is placed into buffer.
+ * @false - hey is not placed into buffer.
+ * 
+ * **/
+bool insertToBuffer(int key, Chunk *cur)
 {
-	//(void) key;
-	//(void) cur;
-	(void) curhead;
-
 	// PHASE I: key insertion into the buffer
 	Chunk *curbuf = cur->buffer;
 	bool result = false;
 
 	// the buffer is not yet allocated
-	if(curbuf == NULL) { 
-
-		printf("Buffer not yet allocated %d\n", result);
-
+	if(curbuf == NULL)
+	{ 
 		// key added during buffer creation
-		if(createBuffer(key, cur, &curbuf)) goto phaseII;
+		if(createBuffer(key, cur, &curbuf))
+		{
+			goto phaseII;
+		}
 	}
 
 	// atomically increase the index in the status
 	Status s = curbuf->status.aIncIdx(&s);
 
 	int idx = getIdx(s);
-	printf("%d\n", idx);
 
-	if(idx<M && !s.isInFreeze(&s)) {
+	if(idx < M && !s.isInFreeze(&s))
+	{
 		curbuf->entries[idx] = key;
 
-		/*TO DO: MEMORY FENCE!!!!!*/
 		#pragma omp barrier
 
-		if(!curbuf->status.isInFreeze(&curbuf->status)) result = true;
-		if(curbuf->entryFrozen(curbuf, idx)) return true;
-
+		if(!curbuf->status.isInFreeze(&curbuf->status))
+		{
+			result = true;
+		}
+		if(curbuf->entryFrozen(curbuf, idx))
+		{
+			return true;
+		}
 	}
 
 phaseII:
-	printf("Phase II\n");
 	usleep(0);
 	freezeChunk(cur);
 	freezeRecovery(cur, NULL);
@@ -176,25 +190,32 @@ phaseII:
 	return result;
 }
 
+/**
+ * void freezeChunk(Chunk *c)
+ *
+ * Freeze for a chunk.
+ * 
+ * Parameters:
+ * @c - chunk pointer to freeze.
+ * 
+ * **/
 void freezeChunk(Chunk *c)
 {
-	//(void) c;
-
 	int idx, frozenIdx = 0;
 
 	// locally copied status
 	Status localS;
 
 	// PHASE I: set the chunk status if needed
-	while(true) {
-
+	while(1)
+	{
 		// read the current status to get its state and index
 		localS = c->status;
 		idx = localS.getIdx(&localS);
 
-		switch (localS.getState(&localS)) {
-
-			case BUFFER: 
+		switch(localS.getState(&localS))
+		{
+			case BUFFER:
 			// in insert or buffer chunks frozenIdx was and remained 0
 
 			case INSERT:
@@ -202,9 +223,12 @@ void freezeChunk(Chunk *c)
 				break;
 
 			case DELETE:
-				if (idx > M) {
+				if (idx > M)
+				{
 					frozenIdx = M;
-				} else {
+				}
+				else
+				{
 					frozenIdx = idx;
 				}
 
@@ -213,8 +237,14 @@ void freezeChunk(Chunk *c)
 				newS.set(&newS, FREEZING, idx, frozenIdx);
 
 				// can fail due to delete updating the index
-				if(c->status.CAS(&c->status, localS, newS)) break;
-				else continue;
+				if(c->status.CAS(&c->status, localS, newS))
+				{
+					break;
+				}
+				else
+				{
+					continue;
+				}
 
 			// in process of being freezed
 			case FREEZING: 
@@ -224,13 +254,13 @@ void freezeChunk(Chunk *c)
 			case FROZEN:
 				c->markPtrs(c);
 				return;
-
 		}
 		break; // continue only if CAS from DELETE state failed
 	}
 
 	//PHASE II: freeze the entries
-	if(c != head) {
+	if(c != head)
+	{
 		freezeKeys(c);
 	}
 
@@ -241,70 +271,96 @@ void freezeChunk(Chunk *c)
 	c->markPtrs(c);
 }
 
+/**
+ * void freezeRecovery(Chunk *cur, Chunk *prev)
+ * 
+ * Replace the frozen chunk with one or more new chunks that hold the relevant entries of the frozen chunk.
+ * 
+ * Parameters:
+ * @cur - pointer to the chunk which is supposed to be replaced.
+ * @prev - pointer to the chunk which should replace frozen chunk.
+ * 
+ * **/
 void freezeRecovery(Chunk *cur, Chunk *prev)
 {
-	//(void) cur;
-	//(void) prev;
-
 	bool toSplit = true;
 	Chunk *local = NULL, *p = NULL;
 
 	// PHASE I: decide whether to split or to merge
-	while(true) {
-
-		if(cur == head || (prev == head && prev->status.isInFreeze(&prev->status))) {
+	while(1)
+	{
+		if(cur == head || (prev == head && prev->status.isInFreeze(&prev->status)))
+		{
 			toSplit = false;
 		}
 
 		//PHASE II: in split, if prev is frozen, recover it first
-		if(toSplit && prev->status.isInFreeze(&prev->status)) {
-
+		if(toSplit && prev->status.isInFreeze(&prev->status))
+		{
 			freezeChunk(prev);// ensure prev freeze is done
 
 			// search the previous to prev
-			if(getChunk(&prev, &p)) {
-
+			if(getChunk(&prev, &p))
+			{
 				// the frozen prev found, p precedes prev; recursive recovery
 				freezeRecovery(prev, p);
 			}
 
 			// prev is already not in the list; re−search the current chunk and find its new predecessor
-			if(!getChunk(&cur, &p)) return; // the frozen cur is not in the list
-			else {
+			if(!getChunk(&cur, &p))
+			{
+				return; // the frozen cur is not in the list
+			}
+			else
+			{
 				prev = p;
 				continue;
 			}
-
 		}
 
 		// PHASE III: apply the decision locally
-		if(toSplit) {
-
-			// STILL MISSING THE IMPLEMENTATION OF SPLIT!!!!!!
+		if(toSplit)
+		{
 			local = split(cur);
-		} else {
-
-			// STILL MISSING THE IMPLEMENTATION OF MERGEFIRSTCHUNK!!!!!!
+		}
+		else
+		{
 			local = mergeFirstChunk(cur);
 		}
 
 		// PHASE IV: change the PQ accordingly to the previous decision
-		if(toSplit) {
-			if(chunk_CAS(&prev->next, cur, local)) return;
-		} else { // when modifying the head, check if cur second or first
-			if (prev == NULL) {
-				if(chunk_CAS(&head, cur, local)) return;
-				else if(chunk_CAS(&head, prev, local)) return;
+		if(toSplit)
+		{
+			if(chunk_CAS(&prev->next, cur, local))
+			{
+				return;
+			}
+		}
+		else // when modifying the head, check if cur second or first
+		{
+			if (prev == NULL)
+			{
+				if(chunk_CAS(&head, cur, local))
+				{
+					return;
+				}
+				else if(chunk_CAS(&head, prev, local))
+				{
+					return;
+				}
 			}
 		}
 
 		// look for new location; finish if the frozen cur is not found
-		if(!getChunk(&cur, &p)) return;
-		else prev = p;
-
+		if(!getChunk(&cur, &p))
+		{
+			return;
+		}
+		else
+		{
+			prev = p;
+		}
 	}
-	printf("%d\n", toSplit);
-	//printf("%d\n", local->status->state);
 }
 
 void freezeKeys(Chunk *c)
@@ -384,31 +440,44 @@ void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
 	*prev = *cur;
 	*cur = (*prev)->next;
 }
-
+/**
+ * void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
+ * 
+ * Compare value stored in 'mem' with value 'old'.
+ * In case they are equal, update memory location 'mem' with value 'new'.
+ * Otherwise, copy value from 'mem' into 'old'.
+ * 
+ * Parameters:
+ * 	@mem - pointer to the memory region which is supposed to be updated.
+ * 	@old - value which compare value stored in 'mem' with.
+ * 	@new - value which should be coppied into 'mem'.
+ * 
+ * **/
 void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
 {
-	(void) mem;
-	(void) old;
-	(void) new;
-
-	/* TODO */
+	__atomic_compare_exchange_n(mem, &old, new, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
+/**
+ * bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
+ * 
+ * Compare chunk 'c' with chunk 'cur'.
+ * In case they are equal, chunk 'local' updates chunk 'c'.
+ * Otherwise, chunk 'c' updates chunk 'cur'.
+ * 
+ * Parameters:
+ * 	@c - double pointer to the chunk which is supposed to be updated.
+ * 	@cur - pointer to the chunk which compare chunk 'c' with.
+ * 	@local - pointer to chuck which should update chunk 'c'.
+ * 
+ * Returned value:
+ * 	@true - if chunks 'c' and 'cur' equal.
+ * 	@false - otherwise.
+ * 
+ * **/
 bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
 {
-	//(void) c;
-	//(void) cur;
-	//(void) local;
-
-	/*This compares the contents of *ptr with the contents 
-	of *expected. If equal, the operation is a 
-	read-modify-write operation that writes desired into *ptr. 
-	If they are not equal, the operation is a read and the 
-	current contents of *ptr are written into *expected.*/
-	int res3 = __atomic_compare_exchange_n(c, local, cur, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-	printf("%d\n", res3);
-
-	return true;
+	return __atomic_compare_exchange_n(c, cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 /**
@@ -428,13 +497,27 @@ bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
  * **/
 bool createBuffer(int key, Chunk *c, Chunk **buf)
 {
-	/**
-	 * As follows from description this function still isn't finished.
-	 * Need to figure out the case for return false value.
-	 * 
-	 * **/
+	bool buf_status;
 
-	c->buffer = init_chunk(BUFFER, 20);
+	// Only one buffer allocated for all threads
+	#pragma omp critical
+	{
+		// If buffer has been already allocated by previous thread
+		if(c->buffer)
+		{
+			buf_status = true;
+		}
+		else
+		{
+			c->buffer = init_chunk(BUFFER, 20);
+			buf_status = false;
+		}
+	}
+
+	if(buf_status)
+	{
+		return false;
+	}
 
 	int i;
 
@@ -463,28 +546,6 @@ int getIdx(Status s)
 {
 	return s.index;
 }
-
-
-States getState(Status s)
-{
-	return s.state;
-}
-
-/*void aOr(Status s, int mask) 
-{
-
-	int state = s.state;
-
-	int res_or =__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
-	printf("%d\n", res_or);
-}*/
-
-/*bool CAS(Status *s, Status localS, Status newS)
-{
-	int res3 = __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-	printf("%d\n", res3);
-	return true;
-}*/
 
 Chunk *split(Chunk *c)
 {
