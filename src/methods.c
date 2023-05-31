@@ -59,7 +59,7 @@ int status_getIdx(Status *s)
  * 
  * Comapre status 's' with status 'localS'.
  * If equal, replace value stored in 's' with value 'newS'.
- * Otherwise, replace value stored in 'localS' with value stored in 's'.
+ * Otherwise, replace value 'localS' with value stored in 's'.
  * 
  * Parameters:
  * 	@s - pointer to Status structure which is supposed to be updated.
