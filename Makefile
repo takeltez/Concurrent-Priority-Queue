@@ -7,11 +7,13 @@ LIB_DIR := lib
 BIN_DIR := bin
 BUILD_DIR := build
 SRC_DIR := src
-INCLUDE_DIR := $(SRC_DIR)/include
+INCLUDE_DIR := include
+QUEUE_DIR := queue
+BENCH_DIR := bench
 DATA_DIR := data
 PLOT_DIR := plots
 REPORT_DIR := report
-BENCH_DIR := bench
+BENCHMARK_DIR := benchmark
 
 PLOT_NAME := plot
 REPORT_NAME := report
@@ -22,8 +24,13 @@ RM := rm
 INSTALL := install
 MKDIR := mkdir
 
-SOURCES := $(wildcard $(SRC_DIR)/*.c)
-OBJECTS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SOURCES))
+QUEUE_SOURCES := $(wildcard $(SRC_DIR)/$(QUEUE_DIR)/*.c)
+BENCH_SOURCES := $(wildcard $(SRC_DIR)/$(BENCH_DIR)/*.c)
+
+QUEUE_OBJECTS := $(patsubst $(SRC_DIR)/$(QUEUE_DIR)/%.c, $(BUILD_DIR)/%.o, $(QUEUE_SOURCES))
+BENCH_OBJECTS := $(patsubst $(SRC_DIR)/$(BENCH_DIR)/%.c, $(BUILD_DIR)/%.o, $(BENCH_SOURCES))
+
+OBJECTS := $(BUILD_DIR)/main.o $(QUEUE_OBJECTS) $(BENCH_OBJECTS)
 
 all: $(LIB_DIR) $(BIN_DIR) $(BUILD_DIR) $(TARGET) $(TARGET).so install
 
@@ -47,8 +54,18 @@ $(DATA_DIR):
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "============================================"
-	@echo "Compiling $(SOURCES)"
-	@$(CC) $(CFLAGS) -fPIC -I$(INCLUDE_DIR) -c -o $@ $<
+	@echo "Compiling src/main.c"
+	@$(CC) $(CFLAGS) -fPIC -I$(SRC_DIR)/$(INCLUDE_DIR) -c -o $@ $<
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/$(QUEUE_DIR)/%.c
+	@echo "============================================"
+	@echo "Compiling $(QUEUE_SOURCES)"
+	@$(CC) $(CFLAGS) -fPIC -I$(SRC_DIR)/$(INCLUDE_DIR) -c -o $@ $<
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/$(BENCH_DIR)/%.c
+	@echo "============================================"
+	@echo "Compiling $(BENCH_SOURCES)"
+	@$(CC) $(CFLAGS) -fPIC -I$(SRC_DIR)/$(INCLUDE_DIR) -c -o $@ $<
 
 $(TARGET): $(OBJECTS)
 	@echo "============================================"
@@ -86,7 +103,7 @@ clean:
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
-	@python3 $(BENCH_DIR)/$(BENCH_NAME).py
+	@python3 $(BENCHMARK_DIR)/$(BENCH_NAME).py
 
 small-plot:
 	@echo "============================================"
@@ -101,7 +118,7 @@ report: small-plot
 	@echo "Created $(REPORT_DIR)/$(REPORT_NAME).pdf"
 
 zip:
-	@zip $(ARCH_NAME).zip $(BENCH_DIR)/* $(SRC_DIR)/* $(INCLUDE_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
+	@zip $(ARCH_NAME).zip $(BENCHMARK_DIR)/* $(SRC_DIR)/* $(SRC_DIR)/$(INCLUDE_DIR)/* $(SRC_DIR)/$(QUEUE_DIR)/* $(SRC_DIR)/$(BENCH_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
 
 .PHONY: all clean small-bench small-plot report zip
 

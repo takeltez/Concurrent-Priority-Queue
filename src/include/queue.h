@@ -69,6 +69,8 @@ int deleteMin(void);
 
 /* Auxiliary functions */
 
+void create_queue(void);
+void destroy_queue(void);
 Chunk *init_chunk(States state, uint32_t max);
 void create_chunk(uint32_t max);
 void print_queue(Chunk *root);

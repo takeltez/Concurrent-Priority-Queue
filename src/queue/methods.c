@@ -171,15 +171,20 @@ void chunk_markPtrs(struct Chunk *c)
 
 	if (c == head)
 	{
-		head = c->next;
+		if(c->next)
+		{
+			head = c->next;
+		}
+		else
+		{
+			head = NULL;
+		}
 
 		goto free;
 	}
 
 	if (c == head->buffer)
 	{
-		head->buffer = NULL;
-
 		goto free;
 	}
 
