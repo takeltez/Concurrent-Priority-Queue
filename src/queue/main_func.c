@@ -17,7 +17,10 @@ void insert(int key)
 	Chunk *cur = NULL;
 	Chunk *prev = NULL;
 
-	while(true)
+	// All threads start at the same time
+	#pragma omp barrier
+
+	while(1)
 	{
 		// Set the current and previous chunk pointers
 		getChunk_by_key(&cur, &prev, key);
@@ -76,6 +79,9 @@ int deleteMin(void)
 	Chunk *cur;
 	Status s;
 	int idx;
+
+	// All threads start at the same time
+	#pragma omp barrier
 
 	while(1)
 	{

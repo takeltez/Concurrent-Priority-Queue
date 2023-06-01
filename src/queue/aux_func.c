@@ -1,6 +1,60 @@
 #include "queue.h"
 
 /**
+ * void create_queue(void)
+ * 
+ * Create queue.
+ * 
+ * **/
+void create_queue(void)
+{
+	int i, max;
+
+	for(i = 0, max = 20; i < MAX_CHUNKS; max += 20, i++)
+	{
+		if (i == MAX_CHUNKS - 1)
+		{
+			create_chunk(UINT32_MAX);
+		}
+		else
+			create_chunk(max);
+	}
+}
+
+/**
+ * void destroy_queue(void)
+ * 
+ * Destroy queue.
+ * 
+ * **/
+void destroy_queue(void)
+{
+	if(!head)
+	{
+		return;
+	}
+
+	Chunk *c = head;
+	Chunk *next = NULL;
+
+	if(c->buffer)
+	{
+		free(c->buffer);
+	}
+
+	while(c)
+	{
+		next = c->next;
+
+		free(c);
+
+		c = next;
+	}
+
+	head = NULL;
+}
+
+/**
  * Chunk *init_chunk(States state, uint32_t max)
  * 
  * Initialize new chunk fields.
@@ -86,6 +140,13 @@ void create_chunk(uint32_t max)
  * **/
 void print_queue(Chunk *root)
 {
+	if(!root)
+	{
+		printf("Queue is not allocated yet\n");
+
+		return;
+	}
+
 	int i = 0;
 	int j;
 
