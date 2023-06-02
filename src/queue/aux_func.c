@@ -324,7 +324,7 @@ void freezeChunk(Chunk *c)
 		freezeKeys(c);
 	}
 
-	// from FREEZING to FROZEN using atomic OR
+	// from FREEZING to FROZEN using atomic XOR
 	c->status.aXor(&c->status, MASK_FROZEN_STATE);
 
 	// set the chunk pointers as deleted
