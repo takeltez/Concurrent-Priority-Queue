@@ -1,4 +1,5 @@
 #include "bench.h"
+#include "queue.h"
 
 int main(int argc, const char **argv)
 {
