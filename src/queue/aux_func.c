@@ -85,6 +85,7 @@ Chunk *init_chunk(States state, uint32_t max)
 	c->status.getIdx = status_getIdx;
 	c->status.CAS = status_CAS;
 	c->status.aOr = status_aOr;
+	c->status.aXor = status_aXor;
 	c->status.set = status_set;
 	c->status.getState = status_getState;
 
@@ -276,9 +277,7 @@ void freezeChunk(Chunk *c)
 
 		switch(localS.getState(&localS))
 		{
-			case BUFFER:
-			// in insert or buffer chunks frozenIdx was and remained 0
-
+			case BUFFER: // in insert or buffer chunks frozenIdx was and remained 0
 			case INSERT:
 				c->status.aOr(&c->status, MASK_FREEZING_STATE);
 				break;
@@ -326,7 +325,7 @@ void freezeChunk(Chunk *c)
 	}
 
 	// from FREEZING to FROZEN using atomic OR
-	c->status.aOr(&c->status, MASK_FROZEN_STATE);
+	c->status.aXor(&c->status, MASK_FROZEN_STATE);
 
 	// set the chunk pointers as deleted
 	c->markPtrs(c);

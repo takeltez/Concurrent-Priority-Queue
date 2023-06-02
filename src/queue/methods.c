@@ -88,9 +88,34 @@ bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
  * **/
 void status_aOr(struct Status *s, int mask)
 {
-	int state = s->state;
+	int state;
+
+	state = s->state;
 
 	__atomic_or_fetch(&state, mask, __ATOMIC_RELEASE);
+
+	s->state = state;
+}
+
+/**
+ * void status_aXor(struct Status *s, int mask)
+ * 
+ * Make binary 'xor' operation to switch between states.
+ * 
+ * Parameters:
+ *  @s - pointer to Status structure
+ *  @mask - mask to change state with.
+ * 
+ * **/
+void status_aXor(struct Status *s, int mask)
+{
+	int state;
+
+	state= s->state;
+
+	__atomic_xor_fetch(&state, mask, __ATOMIC_RELEASE);
+
+	s->state = state;
 }
 
 /**

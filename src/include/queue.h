@@ -13,8 +13,8 @@
 #define M 928
 #define M_FROZEN (M / 63 + 1)
 #define MAX_CHUNKS 3
-#define MASK_FREEZING_STATE 1
-#define MASK_FROZEN_STATE 2
+#define MASK_FREEZING_STATE 3
+#define MASK_FROZEN_STATE 7
 
 /* Chunk states */
 
@@ -40,6 +40,7 @@ typedef struct Status
 	int (*getIdx)(struct Status *s);
 	bool (*CAS)(struct Status *s, struct Status localS, struct Status newS);
 	void (*aOr)(struct Status *s, int mask);
+	void (*aXor)(struct Status *s, int mask);
 	void (*set)(struct Status *s, States state, int idx, int frozenInd);
 	States (*getState)(struct Status *s);
 } Status;
@@ -99,6 +100,7 @@ bool status_isInFreeze(Status *s);
 int status_getIdx(Status *s);
 bool status_CAS(struct Status *s, struct Status localS, struct Status newS);
 void status_aOr(struct Status *s, int mask);
+void status_aXor(struct Status *s, int mask);
 void status_set(Status *s, States state, int idx, int frozenInd);
 States status_getState(Status *s);
 
