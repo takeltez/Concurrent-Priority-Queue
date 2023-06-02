@@ -26,6 +26,6 @@ void set_insert_only_bench(void);
 /* Common functions */
 
 void fill_queue(int n);
-void run_bench(void);
+void small_bench(void);
 
 #endif

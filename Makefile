@@ -118,7 +118,7 @@ report: small-plot
 	@echo "Created $(REPORT_DIR)/$(REPORT_NAME).pdf"
 
 zip:
-	@zip $(ARCH_NAME).zip $(BENCHMARK_DIR)/* $(SRC_DIR)/* $(SRC_DIR)/$(INCLUDE_DIR)/* $(SRC_DIR)/$(QUEUE_DIR)/* $(SRC_DIR)/$(BENCH_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).tex Makefile README.md
+	@zip -r $(ARCH_NAME).zip $(BENCHMARK_DIR)/* $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(PLOT_DIR)/$(PLOT_NAME).pdf $(REPORT_DIR)/$(REPORT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).pdf Makefile README.md
 
 .PHONY: all clean small-bench small-plot report zip
 

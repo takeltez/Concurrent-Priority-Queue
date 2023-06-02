@@ -31,7 +31,7 @@ void fill_queue(int n)
  * Run all benchmarks.
  * 
  * **/
-void run_bench(void)
+void small_bench(void)
 {
 	// Mixed benchmark
 	set_mixed_bench_half();
