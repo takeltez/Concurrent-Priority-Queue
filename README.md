@@ -26,7 +26,7 @@ Run target `small-bench` before `small-plot` and `report` targets!
 Build executable and shared library files `bin/queue` and `lib/queue.so` respectively.
 
 - `small-bench`<br>
-Execute short representative benchmark using `bench/becnmark.py` and collect data in `data` directory.
+Execute short representative benchmark using `benchmark/benchmark.py` and collect data in `data` directory.
 
 - `small-plot`<br>
 Generate `plot.pdf` in `plots` directory.
