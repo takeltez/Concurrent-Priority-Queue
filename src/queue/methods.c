@@ -111,7 +111,7 @@ void status_aXor(struct Status *s, int mask)
 {
 	int state;
 
-	state= s->state;
+	state = s->state;
 
 	__atomic_xor_fetch(&state, mask, __ATOMIC_RELEASE);
 
