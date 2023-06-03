@@ -21,7 +21,7 @@ double run_delete_only_bench(int t)
 
 	tic = omp_get_wtime();
 
-	#pragma omp for
+	#pragma omp parallel for
 	for(int i = 0; i < WORKLOAD; i++)
 	{
 		deleteMin();
