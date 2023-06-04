@@ -3,6 +3,7 @@
 
 #include <time.h>
 
+/* Number of benchmark iterations */
 #define WORKLOAD 1000000
 
 /* Mixed benchmark implementation */

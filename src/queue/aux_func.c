@@ -194,243 +194,6 @@ void print_queue(Chunk *root)
 }
 
 /**
- * bool insertToBuffer(int key, Chunk *cur)
- * 
- * Insert key to buffer.
- * 
- * Parameters:
- * @key - key to insert.
- * @cur - pointer to the first chunk.
- * 
- * Returned value:
- * @true - key is placed into buffer.
- * @false - hey is not placed into buffer.
- * 
- * **/
-bool insertToBuffer(int key, Chunk *cur)
-{
-	// PHASE I: key insertion into the buffer
-	Chunk *curbuf = cur->buffer;
-	bool result = false;
-
-	// the buffer is not yet allocated
-	if(curbuf == NULL)
-	{ 
-		// key added during buffer creation
-		if(createBuffer(key, cur, &curbuf))
-		{
-			goto phaseII;
-		}
-	}
-
-	// atomically increase the index in the status
-	Status s = curbuf->status.aIncIdx(&s);
-
-	int idx = getIdx(s);
-
-	if(idx < M && !s.isInFreeze(&s))
-	{
-		curbuf->entries[idx] = key;
-
-		#pragma omp barrier
-
-		if(!curbuf->status.isInFreeze(&curbuf->status))
-		{
-			result = true;
-		}
-		if(curbuf->entryFrozen(curbuf, idx))
-		{
-			return true;
-		}
-	}
-
-phaseII:
-	usleep(0);
-	freezeChunk(cur);
-	freezeRecovery(cur, NULL);
-
-	return result;
-}
-
-/**
- * void freezeChunk(Chunk *c)
- *
- * Freeze for a chunk.
- * 
- * Parameters:
- * @c - chunk pointer to freeze.
- * 
- * **/
-void freezeChunk(Chunk *c)
-{
-	int idx, frozenIdx = 0;
-
-	// locally copied status
-	Status localS;
-
-	// PHASE I: set the chunk status if needed
-	while(1)
-	{
-		// read the current status to get its state and index
-		localS = c->status;
-		idx = localS.getIdx(&localS);
-
-		switch(localS.getState(&localS))
-		{
-			case BUFFER: // in insert or buffer chunks frozenIdx was and remained 0
-			case INSERT:
-				c->status.aOr(&c->status, MASK_FREEZING_STATE);
-				break;
-
-			case DELETE:
-				if (idx > M)
-				{
-					frozenIdx = M;
-				}
-				else
-				{
-					frozenIdx = idx;
-				}
-
-				// set: state, index, frozen index
-				Status newS;
-				newS.set(&newS, FREEZING, idx, frozenIdx);
-
-				// can fail due to delete updating the index
-				if(c->status.CAS(&c->status, localS, newS))
-				{
-					break;
-				}
-				else
-				{
-					continue;
-				}
-
-			// in process of being freezed
-			case FREEZING:
-				break;
-
-			// c was frozen by someone else
-			case FROZEN:
-				c->markPtrs(c);
-				return;
-		}
-		break; // continue only if CAS from DELETE state failed
-	}
-
-	//PHASE II: freeze the entries
-	if(c != head)
-	{
-		freezeKeys(c);
-	}
-
-	// from FREEZING to FROZEN using atomic XOR
-	c->status.aXor(&c->status, MASK_FROZEN_STATE);
-
-	// set the chunk pointers as deleted
-	c->markPtrs(c);
-}
-
-/**
- * void freezeRecovery(Chunk *cur, Chunk *prev)
- * 
- * Replace the frozen chunk with one or more new chunks that hold the relevant entries of the frozen chunk.
- * 
- * Parameters:
- * @cur - pointer to the chunk which is supposed to be replaced.
- * @prev - pointer to the chunk which should replace frozen chunk.
- * 
- * **/
-void freezeRecovery(Chunk *cur, Chunk *prev)
-{
-	bool toSplit = true;
-	Chunk *local = NULL, *p = NULL;
-
-	// PHASE I: decide whether to split or to merge
-	while(1)
-	{
-		if(cur == head || (prev == head && prev->status.isInFreeze(&prev->status)))
-		{
-			toSplit = false;
-		}
-
-		//PHASE II: in split, if prev is frozen, recover it first
-		if(toSplit && prev->status.isInFreeze(&prev->status))
-		{
-			freezeChunk(prev);// ensure prev freeze is done
-
-			// search the previous to prev
-			if(getChunk(&prev, &p))
-			{
-				// the frozen prev found, p precedes prev; recursive recovery
-				freezeRecovery(prev, p);
-			}
-
-			// prev is already not in the list; re−search the current chunk and find its new predecessor
-			if(!getChunk(&cur, &p))
-			{
-				return; // the frozen cur is not in the list
-			}
-			else
-			{
-				prev = p;
-				continue;
-			}
-		}
-
-		// PHASE III: apply the decision locally
-		if(toSplit)
-		{
-			local = split(cur);
-		}
-		else
-		{
-			local = mergeFirstChunk(cur);
-		}
-
-		// PHASE IV: change the PQ accordingly to the previous decision
-		if(toSplit)
-		{
-			if(chunk_CAS(&prev->next, cur, local))
-			{
-				return;
-			}
-		}
-		else // when modifying the head, check if cur second or first
-		{
-			if (prev == NULL)
-			{
-				if(chunk_CAS(&head, cur, local))
-				{
-					return;
-				}
-				else if(chunk_CAS(&head, prev, local))
-				{
-					return;
-				}
-			}
-		}
-
-		// look for new location; finish if the frozen cur is not found
-		if(!getChunk(&cur, &p))
-		{
-			return;
-		}
-		else
-		{
-			prev = p;
-		}
-	}
-}
-
-void freezeKeys(Chunk *c)
-{
-	(void) c;
-
-	/* TODO */
-}
-
-/**
  * bool getChunk(Chunk **cur, Chunk **prev)
  * 
  * Search for a required chunk in chunk list.
@@ -469,9 +232,9 @@ bool getChunk(Chunk **cur, Chunk **prev)
 }
 
 /**
- * void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
+ * void getChunkByKey(Chunk **cur, Chunk **prev, int key)
  * 
- * Search for a decent chunk in order to store a given key.
+ * Search for a appropriate chunk in order to store a given key.
  * In case such chunk was found pointer to this chunk stored into *cur, and pointer to previous chunk stored into *prev.
  * 
  * Parameters:
@@ -479,7 +242,7 @@ bool getChunk(Chunk **cur, Chunk **prev)
  * 	@prev - double pointer on previous chunk.
  * 
  * **/
-void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
+void getChunkByKey(Chunk **cur, Chunk **prev, int key)
 {
 	*cur = head;
 
@@ -501,7 +264,7 @@ void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
 	*cur = (*prev)->next;
 }
 /**
- * void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
+ * void keyCAS(uint64_t *mem, uint64_t old, uint64_t new)
  * 
  * Compare value stored in 'mem' with value 'old'.
  * If equal, update memory location 'mem' with value 'new'.
@@ -513,13 +276,13 @@ void getChunk_by_key(Chunk **cur, Chunk **prev, int key)
  * 	@new - value which should be coppied into 'mem'.
  * 
  * **/
-void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
+void keyCAS(uint64_t *mem, uint64_t old, uint64_t new)
 {
 	__atomic_compare_exchange_n(mem, &old, new, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 /**
- * bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
+ * bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local)
  * 
  * Compare chunk 'c' with chunk 'cur'.
  * If equal, chunk 'local' updates chunk 'c'.
@@ -535,7 +298,7 @@ void key_CAS(uint64_t *mem, uint64_t old, uint64_t new)
  * 	@false - otherwise.
  * 
  * **/
-bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local)
+bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local)
 {
 	return __atomic_compare_exchange_n(c, cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
@@ -562,7 +325,7 @@ bool createBuffer(int key, Chunk *c, Chunk **buf)
 	// Only one buffer allocated for all threads
 	#pragma omp critical
 	{
-		// If buffer has been already allocated by previous thread
+		// If buffer has been already allocated by any previous thread
 		if(c->buffer)
 		{
 			buf_status = true;
@@ -607,20 +370,163 @@ int getIdx(Status s)
 	return s.index;
 }
 
+/**
+ * Chunk *split(Chunk *c)
+ * 
+ * Create two new half-full chunks from a signle full frozen chunk.
+ * The first chunk, with the lower-valued part of the keys, points to the second chunk, with the higher-valued part.
+ * 
+ * Parameters:
+ * 	@c - pointer to the single full frozen chunk.
+ * 
+ * Returned value:
+ * 	@c - pointer to the new first chunk.
+ * 
+ * **/
+
 Chunk *split(Chunk *c)
 {
-	(void) c;
+	States state;
+	int i, frt_idx, sec_idx;
+	uint32_t max_key_fir;
+	uint32_t max_key_sec;
+	Chunk *first, *second;
 
-	/* TODO */
+	// Set max key of the second chunk as max key of the split chunk
+	max_key_sec = c->max;
 
-	return c;
+	// If we split last chunk whose max key greater than max key of previous chunk more than 20
+	if(max_key_sec == UINT32_MAX)
+	{
+		// Set max key of the first chunk as half of max key of the second chunk
+		max_key_fir = max_key_sec / 2;
+	}
+	else
+	{
+		// Otherwise, set max key of the first chunk as max key of the second chunk minus 10
+		max_key_fir = max_key_sec - 10;
+	}
+
+	state = c->status.getState(&c->status);
+
+	first = init_chunk(state, max_key_fir);
+	second = init_chunk(state, max_key_sec);
+
+	// Copy keys from split chunk
+	for(i = 0, frt_idx = 0, sec_idx = 0; c->entries[i] != 0 && i < M; i++)
+	{
+		// If current key less or equal than max key of first chunk
+		if(c->entries[i] <= first->max)
+		{
+			// Copy current key in the first chunk and increment index
+			frt_idx = first->status.getIdx(&first->status);
+			first->entries[frt_idx] = c->entries[i];
+			first->status.aIncIdx(&first->status);
+		}
+		else // Otherwise
+		{
+			// Copy current key in the second chunk and increment index
+			sec_idx = second->status.getIdx(&second->status);
+			second->entries[sec_idx] = c->entries[i];
+			second->status.aIncIdx(&second->status);
+		}
+	}
+
+	first->next = second;
+
+	return first;
 }
 
+/**
+ * Chunk *mergeFirstChunk(Chunk *c)
+ * 
+ * Create a new first chunk with M ordered keys taken from the frozen first chunk, the buffer and from the second chunk.
+ * If there are too many frozen keys, a new first chunk and new second chunk can be created.
+ * 
+ * Parameters:
+ * 	@c -pointer to the single full frozen chunk.
+ * 
+ * Returned value:
+ * 	@c - pointer to the new first chunk.
+ * 
+ * **/
 Chunk *mergeFirstChunk(Chunk *c)
 {
-	(void) c;
+	States state;
+	int i, idx;
+	int merges_left;
+	uint32_t max_key;
+	Chunk *merged, *tail;
+	Chunk *new, *cur;
 
-	/* TODO */
+	// Set max key of new first chunk as max key of second chunk
+	max_key = c->next->max;
 
-	return c;
+	state = c->status.getState(&c->status);
+	new = init_chunk(state, max_key);
+
+	merged = new;
+
+	for(merges_left = 3; merges_left; merges_left--)
+	{
+		switch(merges_left)
+		{
+			case 3: // Copy from first chunk
+				cur = c;
+				break;
+			case 2: // Copy from buffer
+				cur = c->buffer;
+				break;
+			case 1: // Copy from second chunk
+				cur = c->next;
+				break;
+		}
+
+		// Copy keys from the current chunk
+		for(i = 0; cur->entries[i] != 0 && i < M && idx < M; i++)
+		{
+			idx = new->status.getIdx(&new->status);
+
+			new->entries[idx] = cur->entries[i];
+			new->status.aIncIdx(&new->status);
+
+			idx = new->status.getIdx(&new->status);
+		}
+
+		// If there is no space left in new chunk
+		if(new->status.getIdx(&new->status) == M)
+		{
+			// If copy isn't finished
+			if(cur->entries[i] != 0 && i < M)
+			{
+				// Allocate another new chunk
+				new = init_chunk(state, max_key);
+				tail = merged;
+
+				//Find tail of new chunk
+				while(tail->next)
+				{
+					tail = tail->next;
+				}
+
+				// Add another new chunk to previous new chunk
+				tail->next = new;
+
+				idx = new->status.getIdx(&new->status);
+
+				// Continue copy keys from the current chunk
+				for(; cur->entries[i] != 0 && i < M && idx < M; i++)
+				{
+					idx = new->status.getIdx(&new->status);
+
+					new->entries[idx] = cur->entries[i];
+					new->status.aIncIdx(&new->status);
+
+					idx = new->status.getIdx(&new->status);
+				}
+			}
+		}
+	}
+
+	return merged;
 }

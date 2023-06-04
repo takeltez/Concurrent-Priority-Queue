@@ -11,10 +11,13 @@
 #include <omp.h>
 
 #define M 928
-#define M_FROZEN (M / 63 + 1)
+#define VALS_PER_WORD 63
+#define M_FROZEN (M / VALS_PER_WORD + 1)
+
 #define MAX_CHUNKS 3
 #define MASK_FREEZING_STATE 3
 #define MASK_FROZEN_STATE 7
+#define EMPTY_ENTRY 0
 
 /* Chunk states */
 
@@ -68,24 +71,25 @@ extern Chunk *head;
 void insert(int key);
 int deleteMin(void);
 
-/* Auxiliary functions */
-
-void create_queue(void);
-void destroy_queue(void);
-Chunk *init_chunk(States state, uint32_t max);
-void create_chunk(uint32_t max);
-void print_queue(Chunk *root);
-
 bool insertToBuffer(int key, Chunk *cur);
 void freezeChunk(Chunk *c);
 void freezeRecovery(Chunk *cur, Chunk *prev);
 void freezeKeys(Chunk *c);
 
-bool getChunk(Chunk **cur, Chunk **prev);
-void getChunk_by_key(Chunk **cur, Chunk **prev, int key);
+/* Auxiliary functions */
 
-void key_CAS(uint64_t *mem, uint64_t old, uint64_t new);
-bool chunk_CAS(Chunk **c, Chunk *cur, Chunk *local);
+void create_queue(void);
+void destroy_queue(void);
+
+Chunk *init_chunk(States state, uint32_t max);
+void create_chunk(uint32_t max);
+void print_queue(Chunk *root);
+
+bool getChunk(Chunk **cur, Chunk **prev);
+void getChunkByKey(Chunk **cur, Chunk **prev, int key);
+
+void keyCAS(uint64_t *mem, uint64_t old, uint64_t new);
+bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local);
 
 bool createBuffer(int key, Chunk *c, Chunk **curbuf);
 int getIdx(Status s);
