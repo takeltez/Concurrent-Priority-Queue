@@ -200,8 +200,9 @@ void freezeChunk(Chunk *c)
 					frozenIdx = idx;
 				}
 
+				Status newS = init_status(localS.getState(&localS));
+
 				// set: state, index, frozen index
-				Status newS;
 				newS.set(&newS, FREEZING, idx, frozenIdx);
 
 				// can fail due to delete updating the index

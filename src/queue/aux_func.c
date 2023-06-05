@@ -1,136 +1,6 @@
 #include "queue.h"
 
 /**
- * void create_queue(void)
- * 
- * Create queue.
- * 
- * **/
-void create_queue(void)
-{
-	int i, max;
-
-	for(i = 0, max = 20; i < MAX_CHUNKS; max += 20, i++)
-	{
-		if (i == MAX_CHUNKS - 1)
-		{
-			create_chunk(UINT32_MAX);
-		}
-		else
-			create_chunk(max);
-	}
-}
-
-/**
- * void destroy_queue(void)
- * 
- * Destroy queue.
- * 
- * **/
-void destroy_queue(void)
-{
-	if(!head)
-	{
-		return;
-	}
-
-	Chunk *c = head;
-	Chunk *next = NULL;
-
-	if(c->buffer)
-	{
-		free(c->buffer);
-	}
-
-	while(c)
-	{
-		next = c->next;
-
-		free(c);
-
-		c = next;
-	}
-
-	head = NULL;
-}
-
-/**
- * Chunk *init_chunk(States state, uint32_t max)
- * 
- * Initialize new chunk fields.
- * 
- * Parameters:
- * 	@state - chunk state.
- * 	@max - chunk maximal possible stored key.
- * 
- * Returned value:
- * 	@c - pointer to the new chunk.
- * 
- * **/
-Chunk *init_chunk(States state, uint32_t max)
-{
-	Chunk *c = (Chunk*)malloc(sizeof(Chunk));
-
-	c->max = max;
-
-	memset(c->entries, 0, sizeof(c->entries));
-	memset(c->frozen, 0, sizeof(c->frozen));
-
-	c->status.state = state;
-	c->status.index = 0;
-	c->status.frozenInd = 0;
-
-	c->status.aIncIdx = status_aIncIdx;
-	c->status.isInFreeze = status_isInFreeze;
-	c->status.getIdx = status_getIdx;
-	c->status.CAS = status_CAS;
-	c->status.aOr = status_aOr;
-	c->status.aXor = status_aXor;
-	c->status.set = status_set;
-	c->status.getState = status_getState;
-
-	c->entryFrozen = chunk_entryFrozen;
-	c->markPtrs = chunk_markPtrs;
-
-	c->next = NULL;
-	c->buffer = NULL;
-
-	return c;
-}
-
-/**
- * void create_chunk(uint32_t max)
- * 
- * Create new chunk.
- * 
- * Parameters:
- * 	@max - chunk maximal possible stored key.
- * 
- * **/
-void create_chunk(uint32_t max)
-{
-	if(head == NULL)
-	{
-		Chunk *c = init_chunk(DELETE, max);
-
-		head = c;
-
-		return;
-	}
-
-	Chunk *tail = head;
-
-	while(tail->next)
-	{
-		tail = tail->next;
-	}
-
-	Chunk *c = init_chunk(INSERT, max);
-
-	tail->next = c;
-}
-
-/**
  * void print_queue(Chunk *root)
  * 
  * Print queue state.
@@ -195,6 +65,157 @@ void print_queue(Chunk *root)
 		c = c->next;
 		i++;
 	}
+}
+
+/**
+ * void create_queue(void)
+ * 
+ * Create queue.
+ * 
+ * **/
+void create_queue(void)
+{
+	int i, max;
+
+	for(i = 0, max = 20; i < MAX_CHUNKS; max += 20, i++)
+	{
+		if (i == MAX_CHUNKS - 1)
+		{
+			create_chunk(UINT32_MAX);
+		}
+		else
+			create_chunk(max);
+	}
+}
+
+/**
+ * void destroy_queue(void)
+ * 
+ * Destroy queue.
+ * 
+ * **/
+void destroy_queue(void)
+{
+	if(!head)
+	{
+		return;
+	}
+
+	Chunk *c = head;
+	Chunk *next = NULL;
+
+	if(c->buffer)
+	{
+		free(c->buffer);
+	}
+
+	while(c)
+	{
+		next = c->next;
+
+		free(c);
+
+		c = next;
+	}
+
+	head = NULL;
+}
+
+/**
+ * Status init_status(States state)
+ * 
+ * Initialize status fields.
+ * 
+ * Parameters:
+ * 	@state - chunk state.
+ * 
+ * Returned value:
+ * 	@status - new status structure.
+ * 
+ * **/
+Status init_status(States state)
+{
+	Status status;
+
+	status.state = state;
+	status.index = -1;
+	status.frozenInd = -1;
+
+	status.aIncIdx = status_aIncIdx;
+	status.isInFreeze = status_isInFreeze;
+	status.getIdx = status_getIdx;
+	status.CAS = status_CAS;
+	status.aOr = status_aOr;
+	status.aXor = status_aXor;
+	status.set = status_set;
+	status.getState = status_getState;
+
+	return status;
+}
+
+/**
+ * Chunk *init_chunk(States state, uint32_t max)
+ * 
+ * Initialize new chunk fields.
+ * 
+ * Parameters:
+ * 	@state - chunk state.
+ * 	@max - chunk maximal possible stored key.
+ * 
+ * Returned value:
+ * 	@c - pointer to the new chunk.
+ * 
+ * **/
+Chunk *init_chunk(States state, uint32_t max)
+{
+	Chunk *c = (Chunk*)malloc(sizeof(Chunk));
+
+	c->max = max;
+
+	memset(c->entries, 0, sizeof(c->entries));
+	memset(c->frozen, 0, sizeof(c->frozen));
+
+	c->status = init_status(state);
+
+	c->entryFrozen = chunk_entryFrozen;
+	c->markPtrs = chunk_markPtrs;
+
+	c->next = NULL;
+	c->buffer = NULL;
+
+	return c;
+}
+
+/**
+ * void create_chunk(uint32_t max)
+ * 
+ * Create new chunk.
+ * 
+ * Parameters:
+ * 	@max - chunk maximal possible stored key.
+ * 
+ * **/
+void create_chunk(uint32_t max)
+{
+	if(head == NULL)
+	{
+		Chunk *c = init_chunk(DELETE, max);
+
+		head = c;
+
+		return;
+	}
+
+	Chunk *tail = head;
+
+	while(tail->next)
+	{
+		tail = tail->next;
+	}
+
+	Chunk *c = init_chunk(INSERT, max);
+
+	tail->next = c;
 }
 
 /**
@@ -352,6 +373,9 @@ bool createBuffer(int key, Chunk *c, Chunk **buf)
 
 	c->buffer->entries[i] = key;
 
+	c->buffer->status.aIncIdx(&c->buffer->status);
+	c->status.aIncIdx(&c->status);
+
 	*buf = c->buffer;
 
 	return true;
@@ -417,13 +441,14 @@ Chunk *split(Chunk *c)
 	second = init_chunk(state, max_key_sec);
 
 	// Copy keys from split chunk
-	for(i = 0, frt_idx = 0, sec_idx = 0; c->entries[i] != 0 && i < M; i++)
+	for(i = 0; c->entries[i] != 0 && i < M; i++)
 	{
 		// If current key less or equal than max key of first chunk
 		if(c->entries[i] <= first->max)
 		{
 			// Copy current key in the first chunk and increment index
 			frt_idx = first->status.getIdx(&first->status);
+
 			first->entries[frt_idx] = c->entries[i];
 			first->status.aIncIdx(&first->status);
 		}
@@ -431,6 +456,7 @@ Chunk *split(Chunk *c)
 		{
 			// Copy current key in the second chunk and increment index
 			sec_idx = second->status.getIdx(&second->status);
+
 			second->entries[sec_idx] = c->entries[i];
 			second->status.aIncIdx(&second->status);
 		}
@@ -485,6 +511,8 @@ Chunk *mergeFirstChunk(Chunk *c)
 				cur = c->next;
 				break;
 		}
+
+		idx = new->status.getIdx(&new->status);
 
 		// Copy keys from the current chunk
 		for(i = 0; cur->entries[i] != 0 && i < M && idx < M; i++)
