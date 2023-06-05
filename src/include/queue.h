@@ -10,14 +10,30 @@
 #include <limits.h>
 #include <omp.h>
 
+/* Chunk capacity */
+
 #define M 928
 #define VALS_PER_WORD 63
 #define M_FROZEN (M / VALS_PER_WORD + 1)
 
+/* Number of chunks */
+
 #define MAX_CHUNKS 3
+
+/* Masks for switching chunk states */
+
 #define MASK_FREEZING_STATE 3
 #define MASK_FROZEN_STATE 7
+
+/* Empty enty identifier */
+
 #define EMPTY_ENTRY 0
+
+/* Mark pointer masks */
+
+#define mark(x) ((x) | 1)
+#define unmark(x) (((x) | 1) ^ 1)
+#define is_marked(x) (!!((x) & 1))
 
 /* Chunk states */
 
@@ -96,6 +112,10 @@ int getIdx(Status s);
 
 Chunk *split(Chunk *cur);
 Chunk *mergeFirstChunk(Chunk *cur);
+
+bool is_marked_ref(uintptr_t p);
+uintptr_t get_marked_ref(uintptr_t p);
+uintptr_t get_unmarked_ref(uintptr_t p);
 
 /* Status's methods */
 

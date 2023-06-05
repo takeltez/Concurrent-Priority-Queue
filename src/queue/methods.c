@@ -181,55 +181,40 @@ bool chunk_entryFrozen(Chunk *c, int idx)
 /**
  * void chunk_markPtrs(struct Chunk *c)
  * 
- * Delete chunk from queue.
+ * Mark 'buffer' and 'next' chunk pointers using the common Harris delete-bit technique.
  * 
  * Parameters:
- * 	@c - pointer to chunk for deletion.
+ * 	@c - pointer to chunk for mark pointers in.
  * 
  * **/
 void chunk_markPtrs(struct Chunk *c)
 {
-	if(c == NULL)
-	{
-		return;
-	}
+	uintptr_t ref_buff, ref_next;
 
-	if (c == head)
+	ref_buff = (uintptr_t)(void*) c->buffer;
+	ref_next = (uintptr_t)(void*) c->next;
+
+	if(c->buffer)
 	{
-		if(c->next)
+		if(is_marked_ref(ref_buff))
 		{
-			head = c->next;
+			__atomic_compare_exchange_n(&c->buffer, &ref_buff, get_unmarked_ref(ref_buff), false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 		}
 		else
 		{
-			head = NULL;
+			__atomic_compare_exchange_n(&c->buffer, &ref_buff, get_marked_ref(ref_buff), false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 		}
-
-		goto free;
 	}
 
-	if (c == head->buffer)
+	if(c->next)
 	{
-		goto free;
+		if(is_marked_ref(ref_next))
+		{
+			__atomic_compare_exchange_n(&c->next, &ref_next, get_unmarked_ref(ref_next), false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+		}
+		else
+		{
+			__atomic_compare_exchange_n(&c->next, &ref_next, get_marked_ref(ref_next), true, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+		}
 	}
-
-	Chunk *prev = head;
-	Chunk *next = NULL;
-
-	while(prev->next != c)
-	{
-		prev = prev->next;
-	}
-
-	if((next = prev->next->next))
-	{
-		prev->next = next;
-	}
-	else
-	{
-		prev->next = NULL;
-	}
-
-free:
-	free(c);
 }

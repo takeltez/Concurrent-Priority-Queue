@@ -169,6 +169,8 @@ void print_queue(Chunk *root)
 			{
 				printf("\t\tfrozen[%d] = %lu\n", j, c->buffer->frozen[j]);
 			}
+
+			printf("\tAddr: %p\n\n", c->buffer);
 	}
 
 	while(c)
@@ -187,6 +189,8 @@ void print_queue(Chunk *root)
 		{
 			printf("\t\tfrozen[%d] = %lu\n", j, c->frozen[j]);
 		}
+
+		printf("\tAddr: %p\n\tAddr_next: %p\n\n", c, c->next);
 
 		c = c->next;
 		i++;
@@ -503,7 +507,7 @@ Chunk *mergeFirstChunk(Chunk *c)
 				new = init_chunk(state, max_key);
 				tail = merged;
 
-				//Find tail of new chunk
+				// Find tail of new chunk
 				while(tail->next)
 				{
 					tail = tail->next;
@@ -529,4 +533,56 @@ Chunk *mergeFirstChunk(Chunk *c)
 	}
 
 	return merged;
+}
+
+/**
+ * bool is_marked_ref(uintptr_t r)
+ * 
+ * Check either pointer 'marked' or not.
+ * 
+ * Parameters:
+ * 	@r - pointer to check.
+ * 
+ * Returned value:
+ * 	@true - pointer is 'marked'.
+ * 	@false - otherwise.
+ * 
+ * **/
+bool is_marked_ref(uintptr_t r)
+{
+	return is_marked(r);
+}
+
+/**
+ * uintptr_t get_marked_ref(uintptr_t r)
+ * 
+ * Set otherwise-unused low-order bit in pointer as 'marked'.
+ * 
+ * Parameters:
+ * 	@r - pointer to 'mark'.
+ * 
+ * Returned value:
+ * 	@mark(r) - 'marked' pointer.
+ * 
+ * **/
+uintptr_t get_marked_ref(uintptr_t r)
+{
+	return mark(r);
+}
+
+/**
+ * uintptr_t get_unmarked_ref(uintptr_t r)
+ * 
+ * Set otherwise-unused low-order bit in pointer as 'unmarked'.
+ * 
+ * Parameters:
+ * 	@r - pointer to 'unmark'.
+ * 
+ * Returned value:
+ * 	@unmark(r) - 'unmarked' pointer.
+ * 
+ * **/
+uintptr_t get_unmarked_ref(uintptr_t r)
+{
+	return unmark(r);
 }
