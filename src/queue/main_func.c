@@ -347,7 +347,6 @@ void freezeKeys(Chunk *c)
 	uint64_t l_val, r_val;
 
 	// go over entries which are held by one freeze word
-
 	for(k = 0; k < M / VALS_PER_WORD; k++)
 	{
 		l_val = 1, r_val = 64;
@@ -356,8 +355,8 @@ void freezeKeys(Chunk *c)
 		freezeWord = l_val << r_val;
 		mask = 1;
 
-		//prepare a mask for one frozen word
-		//VALS_PER_WORD is 63
+		// prepare a mask for one frozen word
+		// VALS_PER_WORD is 63
 		for(i = 0; i < VALS_PER_WORD; i++, mask <<= 1)
 		{
 			//read the entry
