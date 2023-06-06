@@ -18,49 +18,24 @@ void print_queue(Chunk *root)
 		return;
 	}
 
-	int i = 0;
+	int i = 1;
 	int j;
 
 	Chunk *c = root;
 
-	if(c->buffer)
-	{
-		printf("Buffer:\n\tStatus properties:\n\t\tstate = %u\n\t\tindex = %u\n\t\tfrozenInd = %u\n", 
-		       c->buffer->status.state, c->buffer->status.index, c->buffer->status.frozenInd);
-
-		printf("\tChunk properties:\n\t\tmax = %u\n", c->buffer->max);
-
-		for(j = 0; c->buffer->entries[j] != 0 && j < M; j++)
-		{
-			printf("\t\tentries[%d] = %lu\n", j, c->buffer->entries[j]);
-		}
-
-			for (j = 0; c->buffer->frozen[j] != 0 && j < M_FROZEN; j++)
-			{
-				printf("\t\tfrozen[%d] = %lu\n", j, c->buffer->frozen[j]);
-			}
-
-			printf("\tAddr: %p\n\n", c->buffer);
-	}
-
 	while(c)
 	{
 		printf("Chunk[%d]:\n\tStatus propirties:\n\t\tstate = %u\n\t\tindex = %u\n\t\tfrozenInd = %u\n",
-		       i, c->status.state, c->status.index, c->status.frozenInd);
+		       i, c->status.state, c->status.index - 1, c->status.frozenInd);
 
 		printf("\tChunk properties:\n\t\tmax = %u\n", c->max);
 
+		printf("\t\tKeys:\n");
+
 		for (j = 0; c->entries[j] != 0 && j < M; j++)
 		{
-			printf("\t\tentries[%d] = %lu\n", j, c->entries[j]);
+			printf("\t\t\tentries[%d] = %lu\n", j, c->entries[j]);
 		}
-
-		for (j = 0; c->frozen[j] != 0 && j < M_FROZEN; j++)
-		{
-			printf("\t\tfrozen[%d] = %lu\n", j, c->frozen[j]);
-		}
-
-		printf("\tAddr: %p\n\tAddr_next: %p\n\n", c, c->next);
 
 		c = c->next;
 		i++;
@@ -138,10 +113,11 @@ Status init_status(States state)
 	Status status;
 
 	status.state = state;
-	status.index = -1;
-	status.frozenInd = -1;
+	status.index = 0;
+	status.frozenInd = 0;
 
 	status.aIncIdx = status_aIncIdx;
+	status.aIncFrzIdx = status_aIncFrzIdx;
 	status.isInFreeze = status_isInFreeze;
 	status.getIdx = status_getIdx;
 	status.CAS = status_CAS;
@@ -325,7 +301,7 @@ void keyCAS(uint64_t *mem, uint64_t old, uint64_t new)
  * **/
 bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local)
 {
-	return __atomic_compare_exchange_n(c, cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	return  __atomic_compare_exchange_n(c, &cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 /**
@@ -346,6 +322,7 @@ bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local)
 bool createBuffer(int key, Chunk *c, Chunk **buf)
 {
 	bool buf_status;
+	int idx;
 
 	// Only one buffer allocated for all threads
 	#pragma omp critical
@@ -367,14 +344,10 @@ bool createBuffer(int key, Chunk *c, Chunk **buf)
 		return false;
 	}
 
-	int i;
-
-	for(i = 0; c->buffer->entries[i] != 0 && i < M; i++);
-
-	c->buffer->entries[i] = key;
+	idx = getIdx(c->buffer->status);
+	c->buffer->entries[idx] = key;
 
 	c->buffer->status.aIncIdx(&c->buffer->status);
-	c->status.aIncIdx(&c->status);
 
 	*buf = c->buffer;
 
@@ -396,6 +369,23 @@ bool createBuffer(int key, Chunk *c, Chunk **buf)
 int getIdx(Status s)
 {
 	return s.index;
+}
+
+/**
+ * int getFrzIdx(Status s)
+ * 
+ * Get chunk status frozen index.
+ * 
+ * Parameters:
+ * 	@s - chunk status.
+ * 
+ * Returned value:
+ * 	@s.index - chunk status frozen index.
+ * 
+ * **/
+int getFrzIdx(Status s)
+{
+	return s.frozenInd;
 }
 
 /**
@@ -470,7 +460,7 @@ Chunk *split(Chunk *c)
 /**
  * Chunk *mergeFirstChunk(Chunk *c)
  * 
- * Create a new first chunk with M ordered keys taken from the frozen first chunk, the buffer and from the second chunk.
+ * Create a new first chunk with M ordered keys taken from the frozen first chunk, and buffer.
  * If there are too many frozen keys, a new first chunk and new second chunk can be created.
  * 
  * Parameters:
@@ -489,26 +479,26 @@ Chunk *mergeFirstChunk(Chunk *c)
 	Chunk *merged, *tail;
 	Chunk *new, *cur;
 
-	// Set max key of new first chunk as max key of second chunk
-	max_key = c->next->max;
+	// Unmark 'buffer' pointer to copy keys to the new first chunk
+	c->markPtrs(c);
 
-	state = c->status.getState(&c->status);
+	// Set max key of new first chunk as max key of current first chunk
+	max_key = c->max;
+
+	state = DELETE;
 	new = init_chunk(state, max_key);
 
 	merged = new;
 
-	for(merges_left = 3; merges_left; merges_left--)
+	for(merges_left = 2; merges_left; merges_left--)
 	{
 		switch(merges_left)
 		{
-			case 3: // Copy from first chunk
+			case 2: // Copy from first chunk
 				cur = c;
 				break;
-			case 2: // Copy from buffer
+			case 1: // Copy from buffer
 				cur = c->buffer;
-				break;
-			case 1: // Copy from second chunk
-				cur = c->next;
 				break;
 		}
 
@@ -560,7 +550,54 @@ Chunk *mergeFirstChunk(Chunk *c)
 		}
 	}
 
-	return merged;
+	tail = merged;
+
+	// Find tail of new chunk
+	while(tail->next)
+	{
+		tail = tail->next;
+	}
+
+	// Add second current chunk to the new first chunk
+	tail->next = c->next;
+
+	// Once merge is dode, mark 'buffer' pointer as deleted again.
+	c->markPtrs(c);
+
+	return sort(merged);
+}
+
+/**
+ * Chunk *sort(Chunk *c)
+ * 
+ * Sort keys in frist chunk in descending order.
+ * 
+ * Parameters:
+ * 	@c - pointer to chunk to sort keys in.
+ * 
+ * Returned value:
+ * 	@c - pointer to chunk with sorted keys.
+ * 
+ * **/
+Chunk *sort(Chunk *c)
+{
+	int i, j;
+	uint64_t tmp;
+
+	for(i = 0; c->entries[i] != 0 && i < M; i++)
+	{
+		for(j = 0; c->entries[j + 1] != 0 && j < M - i - 1; j++)
+		{
+			if(c->entries[j] > c->entries[j + 1])
+			{
+				tmp = c->entries[j];
+				c->entries[j] = c->entries[j + 1];
+				c->entries[j + 1] = tmp;
+			}
+		}
+	}
+
+	return c;
 }
 
 /**

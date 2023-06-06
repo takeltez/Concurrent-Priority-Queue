@@ -19,7 +19,7 @@ void fill_queue(int n)
 
 	for(i = 0; i < n; i++)
 	{
-		key = rand() % UINT32_MAX + 1;
+		key = rand() % RAND_RANGE + 1;
 
 		insert(key);
 	}

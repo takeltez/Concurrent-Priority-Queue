@@ -16,6 +16,8 @@ void insert(int key)
 	// Create pointers to current and previous chunks
 	Chunk *cur = NULL;
 	Chunk *prev = NULL;
+	Status s;
+	int idx;
 
 	// All threads start at the same time
 	#pragma omp barrier
@@ -38,8 +40,10 @@ void insert(int key)
 			}
 		}
 
-		Status s = cur->status.aIncIdx(&cur->status);
-		int idx = getIdx(s);
+		s = cur->status;
+		idx = getIdx(s);
+		
+		cur->status.aIncIdx(&cur->status);
 
 		// insert into a non-full and non-frozen chunk
 		if(idx < M && !s.isInFreeze(&s))
@@ -86,10 +90,13 @@ int deleteMin(void)
 	while(1)
 	{
 		cur = head;
-		s = cur->status.aIncIdx(&cur->status);
-		idx = getIdx(s);
+		s = cur->status;
 
-		if(idx < M && !s.isInFreeze(&s))
+		idx = getFrzIdx(s);
+
+		cur->status.aIncFrzIdx(&cur->status);
+
+		if(idx <= M && !s.isInFreeze(&s))
 		{
 			return cur->entries[idx];
 		}
@@ -123,10 +130,11 @@ bool insertToBuffer(int key, Chunk *cur)
 
 	// the buffer is not yet allocated
 	if(curbuf == NULL)
-	{ 
+	{
 		// key added during buffer creation
 		if(createBuffer(key, cur, &curbuf))
 		{
+			result = true;
 			goto phaseII;
 		}
 	}
@@ -152,8 +160,8 @@ bool insertToBuffer(int key, Chunk *cur)
 		}
 	}
 
-phaseII:
-	usleep(0);
+phaseII: // PHASE II: first chunk merges with buffer before insert ends
+	usleep(0); // yield, give other threads a chance
 	freezeChunk(cur);
 	freezeRecovery(cur, NULL);
 
@@ -200,7 +208,8 @@ void freezeChunk(Chunk *c)
 					frozenIdx = idx;
 				}
 
-				Status newS = init_status(localS.getState(&localS));
+				Status newS;
+				newS = init_status(localS.getState(&localS));
 
 				// set: state, index, frozen index
 				newS.set(&newS, FREEZING, idx, frozenIdx);
@@ -208,6 +217,7 @@ void freezeChunk(Chunk *c)
 				// can fail due to delete updating the index
 				if(c->status.CAS(&c->status, localS, newS))
 				{
+
 					break;
 				}
 				else
@@ -253,18 +263,23 @@ void freezeChunk(Chunk *c)
 void freezeRecovery(Chunk *cur, Chunk *prev)
 {
 	bool toSplit = true;
+	bool isInFreeze = false;
 	Chunk *local = NULL, *p = NULL;
+
+	if(prev)
+	{
+		isInFreeze = prev->status.isInFreeze(&prev->status);
+	}
 
 	// PHASE I: decide whether to split or to merge
 	while(1)
 	{
-		if(cur == head || (prev == head && prev->status.isInFreeze(&prev->status)))
+		if(cur == head || (prev == head && isInFreeze))
 		{
 			toSplit = false;
 		}
-
 		//PHASE II: in split, if prev is frozen, recover it first
-		if(toSplit && prev->status.isInFreeze(&prev->status))
+		if(toSplit && isInFreeze)
 		{
 			freezeChunk(prev);// ensure prev freeze is done
 
@@ -313,10 +328,10 @@ void freezeRecovery(Chunk *cur, Chunk *prev)
 				{
 					return;
 				}
-				else if(chunkCAS(&head, prev, local))
-				{
-					return;
-				}
+			}
+			else if(chunkCAS(&head, prev, local))
+			{
+				return;
 			}
 		}
 

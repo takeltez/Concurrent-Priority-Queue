@@ -20,6 +20,29 @@ Status status_aIncIdx(Status *s)
 }
 
 /**
+ * Status status_aIncFrzIdx(Status *s)
+ * 
+ * Increase status frozen index.
+ * 
+ * Parameters:
+ * 	@s - pointer to Status structure.
+ * 
+ * Returned value:
+ * 	@s - Status structure with new frozen index.
+ * 
+ * **/
+Status status_aIncFrzIdx(Status *s)
+{
+	int frozenInd = s->frozenInd;
+
+	__atomic_fetch_add(&frozenInd, 1, __ATOMIC_RELEASE);
+
+	s->frozenInd = frozenInd;
+
+	return *s;
+}
+
+/**
  * int status_isInFreeze(Status *s)
  * 
  * Check either current chunk state is FREEZING or not.
@@ -34,7 +57,13 @@ Status status_aIncIdx(Status *s)
  * **/
 bool status_isInFreeze(Status *s)
 {
-	return (s->state == FREEZING) ? true : false;
+	int cur_state;
+	int exp_state;
+
+	cur_state = s->state;
+	exp_state = FREEZING;
+
+	return __atomic_compare_exchange_n(&cur_state, &exp_state, exp_state, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 /**
@@ -73,7 +102,17 @@ int status_getIdx(Status *s)
  * **/
 bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
 {
-	return __atomic_compare_exchange_n(&s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	bool res = __atomic_compare_exchange_n((Status**)s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+
+	#pragma omp critical
+	{
+		if(res)
+		{
+			s->set(s, newS.state, newS.index, newS.frozenInd);
+		}
+	}
+
+	return res;
 }
 
 /**
@@ -170,12 +209,10 @@ States status_getState(Status *s)
  * **/
 bool chunk_entryFrozen(Chunk *c, int idx)
 {
-	if(c->frozen[idx] != 0)
-	{
-		return true;
-	}
+	uint64_t not_frozen = 0;
 
-	return false;
+	return !__atomic_compare_exchange_n(&c->frozen[idx], &not_frozen, not_frozen, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+
 }
 
 /**
