@@ -23,7 +23,7 @@ double run_insert_only_bench(int t)
 	// Prepare keys for insertion
 	for(int i = 0; i < WORKLOAD; i++)
 	{
-		keys[i] = rand() % UINT32_MAX + 1;
+		keys[i] = rand() % RAND_RANGE + 1;
 	}
 
 	omp_set_num_threads(t);

@@ -55,6 +55,7 @@ typedef struct Status
 	uint32_t index;
 
 	struct Status (*aIncIdx)(struct Status *s);
+	struct Status (*aIncFrzIdx)(struct Status *s);
 	bool (*isInFreeze)(struct Status *s);
 	int (*getIdx)(struct Status *s);
 	bool (*CAS)(struct Status *s, struct Status localS, struct Status newS);
@@ -110,9 +111,12 @@ bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local);
 
 bool createBuffer(int key, Chunk *c, Chunk **curbuf);
 int getIdx(Status s);
+int getFrzIdx(Status s);
 
 Chunk *split(Chunk *cur);
 Chunk *mergeFirstChunk(Chunk *cur);
+
+Chunk *sort(Chunk *c);
 
 bool is_marked_ref(uintptr_t p);
 uintptr_t get_marked_ref(uintptr_t p);
@@ -121,6 +125,7 @@ uintptr_t get_unmarked_ref(uintptr_t p);
 /* Status's methods */
 
 Status status_aIncIdx(Status *s);
+Status status_aIncFrzIdx(Status *s);
 bool status_isInFreeze(Status *s);
 int status_getIdx(Status *s);
 bool status_CAS(struct Status *s, struct Status localS, struct Status newS);

@@ -7,6 +7,10 @@
 
 #define WORKLOAD 1000000
 
+/* Range of random keys */
+
+#define RAND_RANGE 100
+
 /* Mixed benchmark implementation */
 
 double run_mixed_bench(int t, int p);
