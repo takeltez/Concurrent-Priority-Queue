@@ -171,7 +171,7 @@ phaseII: // PHASE II: first chunk merges with buffer before insert ends
 /**
  * void freezeChunk(Chunk *c)
  *
- * Freeze for a chunk.
+ * Prepare chunk for freeze.
  * 
  * Parameters:
  * @c - chunk pointer to freeze.

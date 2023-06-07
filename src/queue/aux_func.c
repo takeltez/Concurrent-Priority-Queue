@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "bench.h"
 
 /**
  * void print_queue(Chunk *root)
@@ -26,7 +27,7 @@ void print_queue(Chunk *root)
 	while(c)
 	{
 		printf("Chunk[%d]:\n\tStatus propirties:\n\t\tstate = %u\n\t\tindex = %u\n\t\tfrozenInd = %u\n",
-		       i, c->status.state, c->status.index - 1, c->status.frozenInd);
+		       i, c->status.state, c->status.index, c->status.frozenInd);
 
 		printf("\tChunk properties:\n\t\tmax = %u\n", c->max);
 
@@ -406,35 +407,26 @@ Chunk *split(Chunk *c)
 {
 	States state;
 	int i, frt_idx, sec_idx;
-	uint32_t max_key_fir;
-	uint32_t max_key_sec;
+	uint32_t max_key;
 	Chunk *first, *second;
 
-	// Set max key of the second chunk as max key of the split chunk
-	max_key_sec = c->max;
+	// Unmark chunk for split
+	c->markPtrs(c);
 
-	// If we split last chunk whose max key greater than max key of previous chunk more than 20
-	if(max_key_sec == UINT32_MAX)
-	{
-		// Set max key of the first chunk as half of max key of the second chunk
-		max_key_fir = max_key_sec / 2;
-	}
-	else
-	{
-		// Otherwise, set max key of the first chunk as max key of the second chunk minus 10
-		max_key_fir = max_key_sec - 10;
-	}
+	state = INSERT;
+	max_key = c->max;
 
-	state = c->status.getState(&c->status);
+	first = init_chunk(state, max_key);
+	second = init_chunk(state, max_key);
 
-	first = init_chunk(state, max_key_fir);
-	second = init_chunk(state, max_key_sec);
+	// Sort keys in split chunk
+	sort(c);
 
 	// Copy keys from split chunk
-	for(i = 0; c->entries[i] != 0 && i < M; i++)
+	for(i = 0; i < M; i++)
 	{
-		// If current key less or equal than max key of first chunk
-		if(c->entries[i] <= first->max)
+		// Copy lower-valued keys into first chunk
+		if(i <= M / 2)
 		{
 			// Copy current key in the first chunk and increment index
 			frt_idx = first->status.getIdx(&first->status);
@@ -442,7 +434,7 @@ Chunk *split(Chunk *c)
 			first->entries[frt_idx] = c->entries[i];
 			first->status.aIncIdx(&first->status);
 		}
-		else // Otherwise
+		else // Copy hihger-valued keys into second chunk
 		{
 			// Copy current key in the second chunk and increment index
 			sec_idx = second->status.getIdx(&second->status);
@@ -452,7 +444,21 @@ Chunk *split(Chunk *c)
 		}
 	}
 
+	// Connect second chunk to the first chunk
 	first->next = second;
+
+	// Connect all other chunks to the second chunk
+	if(c->next)
+	{
+		second->next = c->next;
+	}
+	else
+	{
+		second->next = NULL;
+	}
+
+	// Once split is finished, mark chunk as deleted again
+	c->markPtrs(c);
 
 	return first;
 }
@@ -460,14 +466,13 @@ Chunk *split(Chunk *c)
 /**
  * Chunk *mergeFirstChunk(Chunk *c)
  * 
- * Create a new first chunk with M ordered keys taken from the frozen first chunk, and buffer.
- * If there are too many frozen keys, a new first chunk and new second chunk can be created.
+ * Create a new DELETE chunks with M ordered keys taken from all current DELETE chnunks, and buffer.
  * 
  * Parameters:
- * 	@c -pointer to the single full frozen chunk.
+ * 	@c -pointer to the current first DELETE chunk.
  * 
  * Returned value:
- * 	@c - pointer to the new first chunk.
+ * 	@c - pointer to the new first DELETE chunk.
  * 
  * **/
 Chunk *mergeFirstChunk(Chunk *c)
@@ -478,27 +483,45 @@ Chunk *mergeFirstChunk(Chunk *c)
 	uint32_t max_key;
 	Chunk *merged, *tail;
 	Chunk *new, *cur;
+	Chunk *next;
 
-	// Unmark 'buffer' pointer to copy keys to the new first chunk
+	// Unmark 'buffer' and 'next' pointers to copy keys to the new first chunk
 	c->markPtrs(c);
 
-	// Set max key of new first chunk as max key of current first chunk
+	state = DELETE;
 	max_key = c->max;
 
-	state = DELETE;
 	new = init_chunk(state, max_key);
 
 	merged = new;
+	next = c->next;
 
-	for(merges_left = 2; merges_left; merges_left--)
+	for(merges_left = 3; merges_left; merges_left--)
 	{
 		switch(merges_left)
 		{
-			case 2: // Copy from first chunk
+			case 3: // Copy from current first DELETE chunk
 				cur = c;
 				break;
-			case 1: // Copy from buffer
-				cur = c->buffer;
+			case 2: // Copy from buffer
+				if(!(cur = c->buffer)) // In case of deleteMin() operation buffer isn't allocated
+				{
+					merges_left = 1;
+					goto Case1;
+				}
+				break;
+Case1:
+			case 1: // Copy from all other current DELETE chunks
+				if(next->max == max_key)
+				{
+					cur = next;
+					next = next->next;
+					merges_left++;
+				}
+				else // Stop copy if we achived first INSERT chunk
+				{
+					goto phaseII;
+				}
 				break;
 		}
 
@@ -507,8 +530,6 @@ Chunk *mergeFirstChunk(Chunk *c)
 		// Copy keys from the current chunk
 		for(i = getFrzIdx(cur->status); cur->entries[i] != 0 && i < M && idx < M; i++)
 		{
-			idx = new->status.getIdx(&new->status);
-
 			new->entries[idx] = cur->entries[i];
 			new->status.aIncIdx(&new->status);
 
@@ -525,13 +546,13 @@ Chunk *mergeFirstChunk(Chunk *c)
 				new = init_chunk(state, max_key);
 				tail = merged;
 
-				// Find tail of new chunk
+				// Find last new DELETE chunk
 				while(tail->next)
 				{
 					tail = tail->next;
 				}
 
-				// Add another new chunk to previous new chunk
+				// Add new DELETE chunk to previous DELETE chunk
 				tail->next = new;
 
 				idx = new->status.getIdx(&new->status);
@@ -539,8 +560,6 @@ Chunk *mergeFirstChunk(Chunk *c)
 				// Continue copy keys from the current chunk
 				for(; cur->entries[i] != 0 && i < M && idx < M; i++)
 				{
-					idx = new->status.getIdx(&new->status);
-
 					new->entries[idx] = cur->entries[i];
 					new->status.aIncIdx(&new->status);
 
@@ -550,43 +569,51 @@ Chunk *mergeFirstChunk(Chunk *c)
 		}
 	}
 
+phaseII: // Connect all new DELETE chunks to INSERT chunks
+
 	tail = merged;
 
-	// Find tail of new chunk
+	// Find last new DELETE chunk
 	while(tail->next)
 	{
 		tail = tail->next;
 	}
 
-	// Add second current chunk to the new first chunk
-	tail->next = c->next;
+	// Add first INSERT chunk right after last new DELETE chunk
+	tail->next = next;
 
-	// Once merge is dode, mark 'buffer' pointer as deleted again.
+	tail = merged;
+
+	// Sort keys in each new DELETE chunk
+	while(tail->max == max_key)
+	{
+		sort(tail);
+		tail = tail->next;
+	}
+
+	// Once merge is dode, mark 'buffer' and ''next' pointers as deleted again.
 	c->markPtrs(c);
 
-	return sort(merged);
+	return merged;
 }
 
 /**
  * Chunk *sort(Chunk *c)
  * 
- * Sort keys in frist chunk in descending order.
+ * Sort keys in chunk in ascending order.
  * 
  * Parameters:
  * 	@c - pointer to chunk to sort keys in.
  * 
- * Returned value:
- * 	@c - pointer to chunk with sorted keys.
- * 
  * **/
-Chunk *sort(Chunk *c)
+void sort(Chunk *c)
 {
 	int i, j;
 	uint64_t tmp;
 
 	for(i = 0; c->entries[i] != 0 && i < M; i++)
 	{
-		for(j = 0; c->entries[j + 1] != 0 && j < M - i - 1; j++)
+		for(j = 0; c->entries[j + 1] != 0 && j < M; j++)
 		{
 			if(c->entries[j] > c->entries[j + 1])
 			{
@@ -596,8 +623,6 @@ Chunk *sort(Chunk *c)
 			}
 		}
 	}
-
-	return c;
 }
 
 /**
