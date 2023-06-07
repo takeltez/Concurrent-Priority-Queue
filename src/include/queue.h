@@ -116,7 +116,7 @@ int getFrzIdx(Status s);
 Chunk *split(Chunk *cur);
 Chunk *mergeFirstChunk(Chunk *cur);
 
-Chunk *sort(Chunk *c);
+void sort(Chunk *c);
 
 bool is_marked_ref(uintptr_t p);
 uintptr_t get_marked_ref(uintptr_t p);

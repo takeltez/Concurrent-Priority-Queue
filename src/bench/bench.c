@@ -15,13 +15,23 @@ void fill_queue(int n)
 	int i;
 	int key;
 
-	srand(time(NULL));
+	omp_set_num_threads(1);
 
-	for(i = 0; i < n; i++)
+	#pragma omp parallel
 	{
-		key = rand() % RAND_RANGE + 1;
+		uint32_t tid;
 
-		insert(key);
+		tid = omp_get_thread_num();
+
+		srand(tid);
+
+		#pragma omp for
+		for(i = 0; i < n; i++)
+		{
+			key = rand_r(&tid) % RAND_RANGE + 1;
+
+			insert(key);
+		}
 	}
 }
 

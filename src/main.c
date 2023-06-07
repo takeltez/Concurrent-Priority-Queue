@@ -8,27 +8,17 @@ int main(int argc, const char **argv)
 
 	create_queue();
 
-	insert(1);
-	insert(2);
-	insert(3);
+	fill_queue(10000);
 
-	insert(23);
-	insert(25);
-	insert(36);
-
-	insert(124);
-	insert(224);
-	insert(344);
-
+	printf("Queue before deletion\n\n");
 	print_queue(head);
 
-	printf("Min key#1: %u\n", deleteMin());
-	printf("Min key#2: %u\n\n", deleteMin());
+	for(int i = 0; i < 1000; i++)
+	{
+		deleteMin();
+	}
 
-	print_queue(head);
-
-	insert(15);
-
+	printf("\nQueue after deletion\n\n");
 	print_queue(head);
 
 	destroy_queue();
