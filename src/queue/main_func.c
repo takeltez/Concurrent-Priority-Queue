@@ -384,7 +384,9 @@ void freezeKeys(Chunk *c)
 		} // end of preparing mask for a single frozen world
 
 		// try to update the frozen array
-		// aster this CAS, surely MSB of the frozen array is set
+		// after this CAS, surely MSB of the frozen array is set
+
 		keyCAS(&c->frozen[k], 0, freezeWord);
+
 	}
 }

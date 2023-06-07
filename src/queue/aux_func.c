@@ -406,9 +406,10 @@ int getFrzIdx(Status s)
 Chunk *split(Chunk *c)
 {
 	States state;
+	Chunk *first, *second;
 	int i, frt_idx, sec_idx;
 	uint32_t max_key;
-	Chunk *first, *second;
+
 
 	// Unmark chunk for split
 	c->markPtrs(c);
@@ -478,12 +479,12 @@ Chunk *split(Chunk *c)
 Chunk *mergeFirstChunk(Chunk *c)
 {
 	States state;
-	int i, idx;
-	int merges_left;
-	uint32_t max_key;
 	Chunk *merged, *tail;
 	Chunk *new, *cur;
 	Chunk *next;
+	int i, idx;
+	int merges_left;
+	uint32_t max_key;
 
 	// Unmark 'buffer' and 'next' pointers to copy keys to the new first chunk
 	c->markPtrs(c);
@@ -496,21 +497,14 @@ Chunk *mergeFirstChunk(Chunk *c)
 	merged = new;
 	next = c->next;
 
-	for(merges_left = 3; merges_left; merges_left--)
+	for(merges_left = 2; merges_left; merges_left--)
 	{
 		switch(merges_left)
 		{
-			case 3: // Copy from current first DELETE chunk
+			case 2: // Copy from current first DELETE chunk
 				cur = c;
 				break;
-			case 2: // Copy from buffer
-				if(!(cur = c->buffer)) // In case of deleteMin() operation buffer isn't allocated
-				{
-					merges_left = 1;
-					goto Case1;
-				}
-				break;
-Case1:
+
 			case 1: // Copy from all other current DELETE chunks
 				if(next->max == max_key)
 				{
@@ -518,9 +512,12 @@ Case1:
 					next = next->next;
 					merges_left++;
 				}
-				else // Stop copy if we achived first INSERT chunk
+				else // Stop copy if we achived first INSERT chunk and try copy keys from buffer
 				{
-					goto phaseII;
+					if(!(cur = c->buffer)) // In case of deleteMin() operation buffer isn't allocated
+					{
+						continue;
+					}
 				}
 				break;
 		}
@@ -569,8 +566,6 @@ Case1:
 		}
 	}
 
-phaseII: // Connect all new DELETE chunks to INSERT chunks
-
 	tail = merged;
 
 	// Find last new DELETE chunk
@@ -584,7 +579,7 @@ phaseII: // Connect all new DELETE chunks to INSERT chunks
 
 	tail = merged;
 
-	// Sort keys in each new DELETE chunk
+	// Sort keys in each new DELETE chunks
 	while(tail->max == max_key)
 	{
 		sort(tail);
