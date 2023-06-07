@@ -8,15 +8,26 @@ int main(int argc, const char **argv)
 
 	create_queue();
 
-	fill_queue(1000);
+	insert(1);
+	insert(2);
+	insert(3);
+
+	insert(23);
+	insert(25);
+	insert(36);
+
+	insert(124);
+	insert(224);
+	insert(344);
 
 	print_queue(head);
 
 	printf("Min key#1: %u\n", deleteMin());
-	printf("Min key#2: %u\n", deleteMin());
-	printf("Min key#3: %u\n", deleteMin());
-	printf("Min key#4: %u\n", deleteMin());
-	printf("Min key#5: %u\n", deleteMin());
+	printf("Min key#2: %u\n\n", deleteMin());
+
+	print_queue(head);
+
+	insert(15);
 
 	print_queue(head);
 

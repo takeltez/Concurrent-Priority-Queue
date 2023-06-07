@@ -505,7 +505,7 @@ Chunk *mergeFirstChunk(Chunk *c)
 		idx = new->status.getIdx(&new->status);
 
 		// Copy keys from the current chunk
-		for(i = 0; cur->entries[i] != 0 && i < M && idx < M; i++)
+		for(i = getFrzIdx(cur->status); cur->entries[i] != 0 && i < M && idx < M; i++)
 		{
 			idx = new->status.getIdx(&new->status);
 

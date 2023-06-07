@@ -205,7 +205,7 @@ void freezeChunk(Chunk *c)
 				}
 				else
 				{
-					frozenIdx = idx;
+					frozenIdx = getFrzIdx(c->status);
 				}
 
 				Status newS;
@@ -217,7 +217,6 @@ void freezeChunk(Chunk *c)
 				// can fail due to delete updating the index
 				if(c->status.CAS(&c->status, localS, newS))
 				{
-
 					break;
 				}
 				else
