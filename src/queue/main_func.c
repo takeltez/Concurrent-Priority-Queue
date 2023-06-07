@@ -385,8 +385,6 @@ void freezeKeys(Chunk *c)
 
 		// try to update the frozen array
 		// after this CAS, surely MSB of the frozen array is set
-
 		keyCAS(&c->frozen[k], 0, freezeWord);
-
 	}
 }
