@@ -13,7 +13,7 @@ int main(int argc, const char **argv)
 	printf("Queue before deletion\n\n");
 	print_queue(head);
 
-	for(int i = 0; i < 1000; i++)
+	for(int i = 0; i <= 1000; i++)
 	{
 		deleteMin();
 	}

@@ -506,7 +506,7 @@ Chunk *mergeFirstChunk(Chunk *c)
 				break;
 
 			case 1: // Copy from all other current DELETE chunks
-				if(next->max == max_key)
+				if(next->status.getState(&next->status) == state)
 				{
 					cur = next;
 					next = next->next;
@@ -580,7 +580,7 @@ Chunk *mergeFirstChunk(Chunk *c)
 	tail = merged;
 
 	// Sort keys in each new DELETE chunks
-	while(tail->max == max_key)
+	while(tail->status.getState(&tail->status) == state)
 	{
 		sort(tail);
 		tail = tail->next;
