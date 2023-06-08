@@ -200,19 +200,51 @@ States status_getState(Status *s)
  * 
  * Paramerers:
  * 	@c - pointer to the chunk.
- * 	@idx - index of frozen array.
+ * 	@idx - index of key.
  * 
  * Returned value:
- * 	@true - if element frozen[idx] contains key.
- * 	@false - if element frozen[idx] doesn't contains key.
+ * 	@true - if key is already marked as frozen.
+ * 	@false - otherwise.
  * 
  * **/
 bool chunk_entryFrozen(Chunk *c, int idx)
 {
-	uint64_t not_frozen = 0;
+	int i, k = 0;
+	int last_frz_idx = 0;
+	uint64_t freezeWord;
 
-	return !__atomic_compare_exchange_n(&c->frozen[idx], &not_frozen, not_frozen, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	// Find frozen array index
+	for(i = 0; i < idx; i++)
+	{
+		if(!(i % VALS_PER_WORD) && i)
+		{
+			k++;
+		}
+	}
 
+	// Set freezeWord
+	freezeWord = c->frozen[k];
+
+	// Count number of 1 bits in freezeWord
+	while(freezeWord != 0)
+	{
+		freezeWord = freezeWord & (freezeWord - 1);
+
+		last_frz_idx++;
+	}
+
+	// Find index of last frozen key in scope of current frozen array element
+	last_frz_idx--;
+
+	// Find absolute index of last frozen key
+	if((last_frz_idx + k * VALS_PER_WORD) >= idx)
+	{
+		// If absolute index of last frozen key is greater or equal than checked index then key is already frozen
+		return true;
+	}
+
+	// Cheked key is not frozen
+	return false;
 }
 
 /**

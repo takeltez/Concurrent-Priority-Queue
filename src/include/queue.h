@@ -14,7 +14,7 @@
 
 #define M 928
 #define VALS_PER_WORD 63
-#define M_FROZEN (M / VALS_PER_WORD + 1)
+#define M_FROZEN (M / VALS_PER_WORD + 2)
 
 /* Number of chunks */
 

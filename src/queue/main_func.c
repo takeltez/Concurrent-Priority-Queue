@@ -43,6 +43,7 @@ void insert(int key)
 		s = cur->status;
 		idx = getIdx(s);
 		
+		// atomically increase the index in the status
 		cur->status.aIncIdx(&cur->status);
 
 		// insert into a non-full and non-frozen chunk
@@ -94,6 +95,7 @@ int deleteMin(void)
 
 		idx = getFrzIdx(s);
 
+		// atomically increase the frozenInd in the status
 		cur->status.aIncFrzIdx(&cur->status);
 
 		if(idx <= M && !s.isInFreeze(&s))
@@ -126,6 +128,8 @@ bool insertToBuffer(int key, Chunk *cur)
 {
 	// PHASE I: key insertion into the buffer
 	Chunk *curbuf = cur->buffer;
+	Status s;
+	int idx;
 	bool result = false;
 
 	// the buffer is not yet allocated
@@ -139,10 +143,11 @@ bool insertToBuffer(int key, Chunk *cur)
 		}
 	}
 
-	// atomically increase the index in the status
-	Status s = curbuf->status.aIncIdx(&s);
+	s = curbuf->status;
+	idx = getIdx(s);
 
-	int idx = getIdx(s);
+	// atomically increase the index in the status
+	curbuf->status.aIncIdx(&curbuf->status);
 
 	if(idx < M && !s.isInFreeze(&s))
 	{
@@ -357,12 +362,12 @@ void freezeRecovery(Chunk *cur, Chunk *prev)
  * **/
 void freezeKeys(Chunk *c)
 {
-	int k, i, entry;
+	int k, i, entry, idx;
 	uint64_t freezeWord, mask;
 	uint64_t l_val, r_val;
 
 	// go over entries which are held by one freeze word
-	for(k = 0; k < M / VALS_PER_WORD; k++)
+	for(k = 0; k < M / VALS_PER_WORD + 1; k++)
 	{
 		l_val = 1, r_val = 64;
 
@@ -374,8 +379,13 @@ void freezeKeys(Chunk *c)
 		// VALS_PER_WORD is 63
 		for(i = 0; i < VALS_PER_WORD; i++, mask <<= 1)
 		{
+			if((idx = i + k * VALS_PER_WORD) == M)
+			{
+				break;
+			}
+
 			//read the entry
-			entry = c->entries[i + k * VALS_PER_WORD];
+			entry = c->entries[idx];
 
 			if(entry != EMPTY_ENTRY)
 			{

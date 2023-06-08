@@ -17,7 +17,7 @@ BENCHMARK_DIR := benchmark
 
 PLOT_NAME := plot
 REPORT_NAME := report
-BENCH_NAME := benchmark
+BENCHMARK_NAME := benchmark
 ARCH_NAME = Aleksei_Mariana_amp_project8
 
 RM := rm
@@ -103,7 +103,7 @@ clean:
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
-	@python3 $(BENCHMARK_DIR)/$(BENCH_NAME).py
+	@python3 $(BENCHMARK_DIR)/$(BENCHMARK_NAME).py
 
 small-plot:
 	@echo "============================================"
@@ -118,7 +118,7 @@ report: small-plot
 	@echo "Created $(REPORT_DIR)/$(REPORT_NAME).pdf"
 
 zip:
-	@zip -r $(ARCH_NAME).zip $(BENCHMARK_DIR)/* $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(PLOT_DIR)/$(PLOT_NAME).pdf $(REPORT_DIR)/$(REPORT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).pdf Makefile README.md
+	@zip -r $(ARCH_NAME).zip $(BENCHMARK_DIR)/$(BENCHMARK_NAME).py $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(PLOT_DIR)/$(PLOT_NAME).pdf $(REPORT_DIR)/$(REPORT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).pdf Makefile README.md
 
 .PHONY: all clean small-bench small-plot report zip
 
