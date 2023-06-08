@@ -410,7 +410,6 @@ Chunk *split(Chunk *c)
 	int i, frt_idx, sec_idx;
 	uint32_t max_key;
 
-
 	// Unmark chunk for split
 	c->markPtrs(c);
 
