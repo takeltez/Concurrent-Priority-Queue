@@ -12,13 +12,18 @@
  * **/
 void fill_queue(int n)
 {
-	int keys[n];
+	int *keys, *vals;
+
+	keys = (int*)malloc(n * sizeof(int));
+	vals = (int*)malloc(n * sizeof(int));
 
 	srand(time(NULL));
 
+	// Prepare key/value pairs for insertion
 	for(int i = 0; i < n; i++)
 	{
 		keys[i] = rand() % RAND_RANGE + 1;
+		vals[i] = rand() % RAND_RANGE + 1;
 	}
 
 	omp_set_num_threads(1);
@@ -26,8 +31,11 @@ void fill_queue(int n)
 	#pragma omp parallel for
 	for(int i = 0; i < n; i++)
 	{
-		insert(keys[i]);
+		insert(keys[i], vals[i]);
 	}
+
+	free(keys);
+	free(vals);
 }
 
 /**

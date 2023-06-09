@@ -17,12 +17,18 @@
 double run_mixed_bench(int t, int p)
 {
 	double tic, toc;
-	int keys[WORKLOAD];
+	int *keys, *vals;
 
-	// Prepare keys for insertion
+	keys = (int*)malloc(WORKLOAD * sizeof(int));
+	vals = (int*)malloc(WORKLOAD * sizeof(int));
+
+	srand(time(NULL));
+
+	// Prepare key/value pairs for insertion
 	for(int i = 0; i < WORKLOAD; i++)
 	{
 		keys[i] = rand() % RAND_RANGE + 1;
+		vals[i] = rand() % RAND_RANGE + 1;
 	}
 
 	omp_set_num_threads(t);
@@ -34,7 +40,7 @@ double run_mixed_bench(int t, int p)
 	{
 		if (i < (WORKLOAD - p))
 		{
-			insert(keys[i]);
+			insert(keys[i], vals[i]);
 		}
 		else
 		{
@@ -43,6 +49,9 @@ double run_mixed_bench(int t, int p)
 	}
 
 	toc = omp_get_wtime();
+
+	free(keys);
+	free(vals);
 
 	return toc - tic;
 }
@@ -150,7 +159,7 @@ void set_mixed_bench_20_del(void)
 
 	printf("Mixed benchmark with 20%% deleteMin() operation persentage:\n");
 
-	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 threads.
+	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 thread.
 	res = run_mixed_bench(i, p);
 
 	printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);

@@ -53,7 +53,7 @@ void set_delete_only_bench(void)
 
 	printf("Delete-only benchmark:\n");
 
-	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 threads.
+	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 thread.
 	res = run_delete_only_bench(i);
 
 	printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
