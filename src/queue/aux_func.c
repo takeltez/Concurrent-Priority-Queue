@@ -246,6 +246,7 @@ bool getChunk(Chunk **cur, Chunk **prev)
  * Parameters:
  * 	@cur - double pointer on chunk for store given key.
  * 	@prev - double pointer on previous chunk.
+ * 	@key - key to store.
  * 
  * **/
 void getChunkByKey(Chunk **cur, Chunk **prev, int key)
@@ -584,11 +585,11 @@ void sort(Chunk *c)
  * Higher 32 bit hold key, lower 32 bits hold value.
  * 
  * Parameters:
- * 	key - key for encode.
- * 	value - for encode.
+ * 	@key - key for encode.
+ * 	@value - for encode.
  * 
  * Returned value:
- * 	keyVal - encoded key/value pair.
+ * 	@keyVal - encoded key/value pair.
  * 
  * **/
 uint64_t key_val_encode(uint64_t key, uint64_t val)
@@ -607,9 +608,9 @@ uint64_t key_val_encode(uint64_t key, uint64_t val)
  * Decode key/value pair from 64-bit word.
  * 
  * Parameters:
- * 	keyVal - 64-bit word contains encoded key/value pair.
- * 	key - pointer to key for decode.
- * 	value - pointer to value for decode.
+ * 	@keyVal - 64-bit word contains encoded key/value pair.
+ * 	@key - pointer to key for decode.
+ * 	@value - pointer to value for decode.
  * 
  * **/
 void key_val_decode(uint64_t keyVal, uint64_t *key, uint64_t *val)

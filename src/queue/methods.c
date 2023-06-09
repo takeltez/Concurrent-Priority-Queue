@@ -100,7 +100,7 @@ int status_getIdx(Status *s)
  * 	@false - otherwise.
  * 
  * **/
-bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
+bool status_CAS(Status *s, Status localS, Status newS)
 {
 	bool res;
 
@@ -127,7 +127,7 @@ bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
  * 	@mask - mask to change state with.
  * 
  * **/
-void status_aOr(struct Status *s, int mask)
+void status_aOr(Status *s, int mask)
 {
 	int state;
 
@@ -148,7 +148,7 @@ void status_aOr(struct Status *s, int mask)
  *  @mask - mask to change state with.
  * 
  * **/
-void status_aXor(struct Status *s, int mask)
+void status_aXor(Status *s, int mask)
 {
 	int state;
 
@@ -258,7 +258,7 @@ bool chunk_entryFrozen(Chunk *c, int idx)
  * 	@c - pointer to chunk for mark pointers in.
  * 
  * **/
-void chunk_markPtrs(struct Chunk *c)
+void chunk_markPtrs(Chunk *c)
 {
 	uintptr_t ref_buff, ref_next;
 
@@ -296,11 +296,11 @@ void chunk_markPtrs(struct Chunk *c)
  * Get key from 64-bit word.
  * 
  * Parameters:
- * 	c - pointer to the chunk contains desired key.
- * 	idx - index of desired key.
+ * 	@c - pointer to the chunk contains desired key.
+ * 	@idx - index of desired key.
  * 
  * Returned value:
- * 	c->entries[idx] >> 32 - desired key.
+ * 	@c->entries[idx] >> 32 - desired key.
  * 
  * **/
 int chunk_getKey(Chunk *c, int idx)
