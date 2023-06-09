@@ -113,7 +113,7 @@ int deleteMin(void)
 /**
  * bool insertToBuffer(int key, Chunk *cur)
  * 
- * Insert key to buffer.
+ * Insert key/value pair to buffer.
  * 
  * Parameters:
  * @key - key to insert.
@@ -201,7 +201,7 @@ bool createBuffer(int key, int val, Chunk *c, Chunk **curbuf)
 
 	res = __atomic_compare_exchange_n(&c->buffer, &null_ptr, buf, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 
-	*curbuf = buf; ; // update buffer ptr (ours or someone’s else)
+	*curbuf = buf; // update buffer ptr (ours or someone’s else)
 
 	return res;
 }
