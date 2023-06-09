@@ -16,14 +16,18 @@
 double run_insert_only_bench(int t)
 {
 	double tic, toc;
-	int keys[WORKLOAD];
+	int *keys, *vals;
+
+	keys = (int*)malloc(WORKLOAD * sizeof(int));
+	vals = (int*)malloc(WORKLOAD * sizeof(int));
 
 	srand(time(NULL));
 
-	// Prepare keys for insertion
+	// Prepare key/value pairs for insertion
 	for(int i = 0; i < WORKLOAD; i++)
 	{
 		keys[i] = rand() % RAND_RANGE + 1;
+		vals[i] = rand() % RAND_RANGE + 1;
 	}
 
 	omp_set_num_threads(t);
@@ -33,10 +37,13 @@ double run_insert_only_bench(int t)
 	#pragma omp parallel for
 	for(int i = 0; i < WORKLOAD; i++)
 	{
-		insert(keys[i]);
+		insert(keys[i], vals[i]);
 	}
 
 	toc = omp_get_wtime();
+
+	free(keys);
+	free(vals);
 
 	return toc - tic;
 }
@@ -62,7 +69,7 @@ void set_insert_only_bench(void)
 
 	printf("Insert-only benchmark:\n");
 
-	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 threads.
+	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 thread.
 	res = run_insert_only_bench(i);
 
 	printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);

@@ -77,6 +77,7 @@ typedef struct Chunk
 
 	bool (*entryFrozen)(struct Chunk *c, int idx);
 	void (*markPtrs)(struct Chunk *c);
+	int (*getKey)(struct Chunk *c, int idx);
 }Chunk;
 
 /* Global bointer to the first chunk */
@@ -85,12 +86,15 @@ extern Chunk *head;
 
 /* Main functions */
 
-void insert(int key);
+void insert(int key, int val);
 int deleteMin(void);
 
-bool insertToBuffer(int key, Chunk *cur);
+bool insertToBuffer(int key, int val, Chunk *cur);
+bool createBuffer(int key, int val, Chunk *c, Chunk **curbuf);
+
 void freezeChunk(Chunk *c);
 void freezeRecovery(Chunk *cur, Chunk *prev);
+
 void freezeKeys(Chunk *c);
 
 /* Auxiliary functions */
@@ -109,7 +113,6 @@ void getChunkByKey(Chunk **cur, Chunk **prev, int key);
 void keyCAS(uint64_t *mem, uint64_t old, uint64_t new);
 bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local);
 
-bool createBuffer(int key, Chunk *c, Chunk **curbuf);
 int getIdx(Status s);
 int getFrzIdx(Status s);
 
@@ -117,6 +120,9 @@ Chunk *split(Chunk *cur);
 Chunk *mergeFirstChunk(Chunk *cur);
 
 void sort(Chunk *c);
+
+uint64_t key_val_encode(uint64_t key, uint64_t val);
+void key_val_decode(uint64_t keyVal, uint64_t *key, uint64_t *val);
 
 bool is_marked_ref(uintptr_t p);
 uintptr_t get_marked_ref(uintptr_t p);
@@ -138,5 +144,6 @@ States status_getState(Status *s);
 
 bool chunk_entryFrozen(Chunk *c, int idx);
 void chunk_markPtrs(struct Chunk *c);
+int chunk_getKey(Chunk *c, int idx);
 
 #endif

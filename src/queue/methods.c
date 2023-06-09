@@ -102,7 +102,9 @@ int status_getIdx(Status *s)
  * **/
 bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
 {
-	bool res = __atomic_compare_exchange_n((Status**)s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	bool res;
+
+	res = __atomic_compare_exchange_n((Status **)s, &localS, &newS, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 
 	#pragma omp critical
 	{
@@ -225,7 +227,7 @@ bool chunk_entryFrozen(Chunk *c, int idx)
 	// Set freezeWord
 	freezeWord = c->frozen[k];
 
-	// Count number of 1 bits in freezeWord
+	// Count number of 1 bits in freezeWord using Brian-Kernighan technique
 	while(freezeWord != 0)
 	{
 		freezeWord = freezeWord & (freezeWord - 1);
@@ -286,4 +288,22 @@ void chunk_markPtrs(struct Chunk *c)
 			__atomic_compare_exchange_n(&c->next, &ref_next, get_marked_ref(ref_next), true, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 		}
 	}
+}
+
+/**
+ * int chunk_getKey(Chunk *c, int idx)
+ * 
+ * Get key from 64-bit word.
+ * 
+ * Parameters:
+ * 	c - pointer to the chunk contains desired key.
+ * 	idx - index of desired key.
+ * 
+ * Returned value:
+ * 	c->entries[idx] >> 32 - desired key.
+ * 
+ * **/
+int chunk_getKey(Chunk *c, int idx)
+{
+	return c->entries[idx] >> 32;
 }

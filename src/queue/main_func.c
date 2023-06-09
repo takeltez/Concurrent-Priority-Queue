@@ -5,13 +5,13 @@ Chunk *head = NULL;
 /**
  * void insert(int key)
  * 
- * Insert key into queue.
+ * Insert key/value pair into queue.
  * 
  * Parameters:
  * 	@key - key to insert.
  * 
  * **/
-void insert(int key)
+void insert(int key, int val)
 {
 	// Create pointers to current and previous chunks
 	Chunk *cur = NULL;
@@ -30,7 +30,7 @@ void insert(int key)
 		// If it is the first chunk, insert in the buffer instead
 		if(cur == head)
 		{
-			if(insertToBuffer(key, cur))
+			if(insertToBuffer(key, val, cur))
 			{
 				return;
 			}
@@ -49,7 +49,7 @@ void insert(int key)
 		// insert into a non-full and non-frozen chunk
 		if(idx < M && !s.isInFreeze(&s))
 		{
-			cur->entries[idx] = key;
+			cur->entries[idx] = key_val_encode(key, val);
 
 			#pragma omp barrier
 
@@ -73,10 +73,10 @@ void insert(int key)
 /**
  * int deleteMin(void)
  * 
- * Delete key with higher priority from queue.
+ * Delete key/value pair with higher priority from queue.
  * 
  * Returned value:
- * 	@cur->entries[idx] - index of removed key.
+ * 	@cur->entries[idx] - deleted key/value pair.
  * 
  * **/
 int deleteMin(void)
@@ -98,13 +98,13 @@ int deleteMin(void)
 		// atomically increase the frozenInd in the status
 		cur->status.aIncFrzIdx(&cur->status);
 
-		if(idx <= M && !s.isInFreeze(&s))
+		if(idx < M && !s.isInFreeze(&s)) // delete from not full and non≠frozen chunk
 		{
 			return cur->entries[idx];
 		}
 
 		freezeChunk(cur);
-		freezeRecovery(cur, NULL);
+		freezeRecovery(cur, NULL); // Freeze, then restructure the CBPQ and retry
 	}
 
 	return 0;
@@ -124,7 +124,7 @@ int deleteMin(void)
  * @false - hey is not placed into buffer.
  * 
  * **/
-bool insertToBuffer(int key, Chunk *cur)
+bool insertToBuffer(int key, int val, Chunk *cur)
 {
 	// PHASE I: key insertion into the buffer
 	Chunk *curbuf = cur->buffer;
@@ -136,7 +136,7 @@ bool insertToBuffer(int key, Chunk *cur)
 	if(curbuf == NULL)
 	{
 		// key added during buffer creation
-		if(createBuffer(key, cur, &curbuf))
+		if(createBuffer(key, val, cur, &curbuf))
 		{
 			result = true;
 			goto phaseII;
@@ -151,7 +151,7 @@ bool insertToBuffer(int key, Chunk *cur)
 
 	if(idx < M && !s.isInFreeze(&s))
 	{
-		curbuf->entries[idx] = key;
+		curbuf->entries[idx] = key_val_encode(key, val);
 
 		#pragma omp barrier
 
@@ -171,6 +171,39 @@ phaseII: // PHASE II: first chunk merges with buffer before insert ends
 	freezeRecovery(cur, NULL);
 
 	return result;
+}
+
+/**
+ * bool createBuffer(int key, Chunk *c, Chunk **buf)
+ * 
+ * Create buffer for the first chunk, add key into this buffer and store pointer to this buffer into *buf.
+ * 
+ * Parameters:
+ * 	@key - key to be added into buffer.
+ * 	@c - pointer on the first chunk.
+ * 	@buf -double pointer to the buffer
+ * 
+ * Returned value:
+ * 	@true - the new buffer was successfully connected to the first chunk.
+ * 	@false - another thread had connected another buffer.
+ * 
+ * **/
+bool createBuffer(int key, int val, Chunk *c, Chunk **curbuf)
+{
+	Chunk *buf, *null_ptr;
+	bool res;
+
+	null_ptr = NULL;
+
+	buf = init_chunk(BUFFER, 20);
+
+	buf->entries[0] = key_val_encode(key, val); // buffer is created with the key
+
+	res = __atomic_compare_exchange_n(&c->buffer, &null_ptr, buf, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+
+	*curbuf = buf; ; // update buffer ptr (ours or someone’s else)
+
+	return res;
 }
 
 /**

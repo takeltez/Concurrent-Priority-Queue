@@ -19,6 +19,7 @@ void print_queue(Chunk *root)
 		return;
 	}
 
+	uint64_t key, val;
 	int i = 1;
 	int j;
 
@@ -31,11 +32,13 @@ void print_queue(Chunk *root)
 
 		printf("\tChunk properties:\n\t\tmax = %u\n", c->max);
 
-		printf("\t\tKeys:\n");
+		printf("\t\tEntries:\n");
 
 		for (j = 0; c->entries[j] != 0 && j < M; j++)
 		{
-			printf("\t\t\tentries[%d] = %lu\n", j, c->entries[j]);
+			key_val_decode(c->entries[j], &key, &val);
+
+			printf("\t\t\tentry[%d]: key = %lu, value = %lu\n", j, key, val);
 		}
 
 		c = c->next;
@@ -156,6 +159,7 @@ Chunk *init_chunk(States state, uint32_t max)
 
 	c->entryFrozen = chunk_entryFrozen;
 	c->markPtrs = chunk_markPtrs;
+	c->getKey = chunk_getKey;
 
 	c->next = NULL;
 	c->buffer = NULL;
@@ -303,56 +307,6 @@ void keyCAS(uint64_t *mem, uint64_t old, uint64_t new)
 bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local)
 {
 	return  __atomic_compare_exchange_n(c, &cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-}
-
-/**
- * bool createBuffer(int key, Chunk *c, Chunk **buf)
- * 
- * Create buffer for the first chunk, add key into this buffer and store pointer to this buffer into *buf.
- * 
- * Parameters:
- * 	@key - key to be added into buffer.
- * 	@c - pointer on the first chunk.
- * 	@buf -double pointer to the buffer
- * 
- * Returned value:
- * 	@true - the new buffer was successfully connected to the first chunk.
- * 	@false - another thread had connected another buffer.
- * 
- * **/
-bool createBuffer(int key, Chunk *c, Chunk **buf)
-{
-	bool buf_status;
-	int idx;
-
-	// Only one buffer allocated for all threads
-	#pragma omp critical
-	{
-		// If buffer has been already allocated by any previous thread
-		if(c->buffer)
-		{
-			buf_status = true;
-		}
-		else
-		{
-			c->buffer = init_chunk(BUFFER, 20);
-			buf_status = false;
-		}
-	}
-
-	if(buf_status)
-	{
-		return false;
-	}
-
-	idx = getIdx(c->buffer->status);
-	c->buffer->entries[idx] = key;
-
-	c->buffer->status.aIncIdx(&c->buffer->status);
-
-	*buf = c->buffer;
-
-	return true;
 }
 
 /**
@@ -604,12 +558,16 @@ void sort(Chunk *c)
 {
 	int i, j;
 	uint64_t tmp;
+	uint64_t key_cur, key_next;
 
 	for(i = 0; c->entries[i] != 0 && i < M; i++)
 	{
 		for(j = 0; c->entries[j + 1] != 0 && j < M; j++)
 		{
-			if(c->entries[j] > c->entries[j + 1])
+			key_cur = c->getKey(c, j);
+			key_next = c->getKey(c, j + 1);
+
+			if(key_cur > key_next)
 			{
 				tmp = c->entries[j];
 				c->entries[j] = c->entries[j + 1];
@@ -617,6 +575,51 @@ void sort(Chunk *c)
 			}
 		}
 	}
+}
+
+/**
+ * uint64_t key_val_encode(uint64_t key, uint64_t val)
+ * 
+ * Encode key/value pair into 64-bit word.
+ * Higher 32 bit hold key, lower 32 bits hold value.
+ * 
+ * Parameters:
+ * 	key - key for encode.
+ * 	value - for encode.
+ * 
+ * Returned value:
+ * 	keyVal - encoded key/value pair.
+ * 
+ * **/
+uint64_t key_val_encode(uint64_t key, uint64_t val)
+{
+	uint64_t keyVal;
+
+	keyVal = key << 32;
+	keyVal |= val;
+
+	return keyVal;
+}
+
+/**
+ * uint64_t key_val_decode(uint64_t key, uint64_t val)
+ * 
+ * Decode key/value pair from 64-bit word.
+ * 
+ * Parameters:
+ * 	keyVal - 64-bit word contains encoded key/value pair.
+ * 	key - pointer to key for decode.
+ * 	value - pointer to value for decode.
+ * 
+ * **/
+void key_val_decode(uint64_t keyVal, uint64_t *key, uint64_t *val)
+{
+	uint64_t mask;
+
+	mask = UINT32_MAX;
+
+	*key = keyVal >> 32;
+	*val = keyVal & mask;
 }
 
 /**
