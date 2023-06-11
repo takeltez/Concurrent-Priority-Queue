@@ -68,32 +68,32 @@ void set_mixed_bench_half(void)
 	int p;
 	double res;
 
-	// Create queue
-	create_queue();
-
-	// Prepare queue for test inserting 1.000.000 random keys
-	fill_queue(1000000);
-
 	// Set operation percentage
 	p = WORKLOAD * 0.5;
 
-	printf("Mixed benchmark with 50/50 operations persentage:\n");
+	printf("Mixed benchmark with insert/deleteMin operation persentage: 50/50:\n");
 
-	// Run mixed benchmark with 50/50 operations persentage for 1 thread.
-	res = run_mixed_bench(i, p);
-
-	printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
-
-	for(i = 8; i <= 64; i += 8)
+	for(i = 1; i <= 64; i += 8)
 	{
-		// Run mixed benchmark with 50/50 operations persentage for 8+ threads.
+		if(i == 9)
+		{
+			i--;
+		}
+
+		// Create queue
+		create_queue();
+
+		// Prepare queue for test
+		fill_queue(WORKLOAD);
+
+		// Run mixed benchmark with 50/50 operations persentage.
 		res = run_mixed_bench(i, p);
 
-		printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
-	}
+		printf("\tNumber of threads: %d\n\tElapsed time: %f\n\n", i, res);
 
-	// Destroy queue
-	destroy_queue();
+		// Destroy queue
+		destroy_queue();
+	}
 }
 
 /**
@@ -108,32 +108,32 @@ void set_mixed_bench_80_del(void)
 	int p;
 	double res;
 
-	// Create queue
-	create_queue();
-
-	// Prepare queue for test inserting 10.000.000 random keys
-	fill_queue(10000000);
-
 	// Set operation percentage
 	p = WORKLOAD * 0.8;
 
-	printf("Mixed benchmark with 80%% deleteMin() operation persentage:\n");
+	printf("Mixed benchmark with insert/deleteMin operation persentage: 20/80:\n");
 
-	// Run mixed benchmark with 80% deleteMin() operation persentage for 1 thread.
-	res = run_mixed_bench(i, p);
-
-	printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
-
-	for(i = 8; i <= 64; i += 8)
+	for(i = 1; i <= 64; i += 8)
 	{
-		// Run mixed benchmark with 80% deleteMin() operation persentage for 8+ threads.
+		if(i == 9)
+		{
+			i--;
+		}
+
+		// Create queue
+		create_queue();
+
+		// Prepare queue for test
+		fill_queue(WORKLOAD);
+
+		// Run mixed benchmark with 80% deleteMin() operation persentage.
 		res = run_mixed_bench(i, p);
 
-		printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
-	}
+		printf("\tNumber of threads: %d\n\tElapsed time: %f\n\n", i, res);
 
-	// Destroy queue
-	destroy_queue();
+		// Destroy queue
+		destroy_queue();
+	}
 }
 
 /**
@@ -148,30 +148,30 @@ void set_mixed_bench_20_del(void)
 	int p;
 	double res;
 
-	// Create queue
-	create_queue();
-
-	// Prepare queue for test inserting 10.000.000 random keys
-	fill_queue(10000000);
-
 	// Set operation percentage
 	p = WORKLOAD * 0.2;
 
-	printf("Mixed benchmark with 20%% deleteMin() operation persentage:\n");
+	printf("Mixed benchmark with insert/deleteMin operation persentage: 80/20:\n");
 
-	// Run mixed benchmark with 20% deleteMin() operation persentage for 1 thread.
-	res = run_mixed_bench(i, p);
-
-	printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
-
-	for(i = 8; i <= 64; i += 8)
+	for(i = 1; i <= 64; i += 8)
 	{
-		// Run mixed benchmark with 20% deleteMin() operation persentage for 8+ threads.
+		if(i == 9)
+		{
+			i--;
+		}
+
+		// Create queue
+		create_queue();
+
+		// Prepare queue for test
+		fill_queue(WORKLOAD);
+
+		// Run mixed benchmark with 20% deleteMin() operation persentage
 		res = run_mixed_bench(i, p);
 
-		printf("\tNumber of threads: %d\t\nElapsed time: %f\n\n", i, res);
+		printf("\tNumber of threads: %d\n\tElapsed time: %f\n\n", i, res);
+
+		// Destroy queue
+		destroy_queue();
 	}
-	
-	// Destroy queue
-	destroy_queue();
 }

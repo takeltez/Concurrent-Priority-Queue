@@ -26,7 +26,7 @@ void fill_queue(int n)
 		vals[i] = rand() % RAND_RANGE + 1;
 	}
 
-	omp_set_num_threads(1);
+	omp_set_num_threads(64);
 
 	#pragma omp parallel for
 	for(int i = 0; i < n; i++)
@@ -47,12 +47,12 @@ void fill_queue(int n)
 void small_bench(void)
 {
 	// Mixed benchmark
-	set_mixed_bench_half();
-	set_mixed_bench_80_del();
-	set_mixed_bench_20_del();
+	//set_mixed_bench_half();
+	//set_mixed_bench_80_del();
+	//set_mixed_bench_20_del();
 
 	//Delete-only benchmark
-	set_delete_only_bench();
+	//set_delete_only_bench();
 
 	//Insert-only benchmark
 	set_insert_only_bench();

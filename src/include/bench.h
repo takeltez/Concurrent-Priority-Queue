@@ -5,7 +5,7 @@
 
 /* Number of benchmark iterations */
 
-#define WORKLOAD 1000000
+#define WORKLOAD 10000
 
 /* Range of random keys */
 

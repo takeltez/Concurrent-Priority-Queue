@@ -250,47 +250,6 @@ bool chunk_entryFrozen(Chunk *c, int idx)
 }
 
 /**
- * void chunk_markPtrs(struct Chunk *c)
- * 
- * Mark 'buffer' and 'next' chunk pointers using the common Harris delete-bit technique.
- * 
- * Parameters:
- * 	@c - pointer to chunk for mark pointers in.
- * 
- * **/
-void chunk_markPtrs(Chunk *c)
-{
-	uintptr_t ref_buff, ref_next;
-
-	ref_buff = (uintptr_t)(void*) c->buffer;
-	ref_next = (uintptr_t)(void*) c->next;
-
-	if(c->buffer)
-	{
-		if(is_marked_ref(ref_buff))
-		{
-			__atomic_compare_exchange_n(&c->buffer, &ref_buff, get_unmarked_ref(ref_buff), false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-		}
-		else
-		{
-			__atomic_compare_exchange_n(&c->buffer, &ref_buff, get_marked_ref(ref_buff), false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-		}
-	}
-
-	if(c->next)
-	{
-		if(is_marked_ref(ref_next))
-		{
-			__atomic_compare_exchange_n(&c->next, &ref_next, get_unmarked_ref(ref_next), false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-		}
-		else
-		{
-			__atomic_compare_exchange_n(&c->next, &ref_next, get_marked_ref(ref_next), true, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
-		}
-	}
-}
-
-/**
  * int chunk_getKey(Chunk *c, int idx)
  * 
  * Get key from 64-bit word.

@@ -19,9 +19,6 @@ void insert(int key, int val)
 	Status s;
 	int idx;
 
-	// All threads start at the same time
-	#pragma omp barrier
-
 	while(1)
 	{
 		// Set the current and previous chunk pointers
@@ -50,8 +47,6 @@ void insert(int key, int val)
 		if(idx < M && !s.isInFreeze(&s))
 		{
 			cur->entries[idx] = key_val_encode(key, val);
-
-			#pragma omp barrier
 
 			if(!cur->status.isInFreeze(&cur->status))
 			{
@@ -84,9 +79,6 @@ int deleteMin(void)
 	Chunk *cur;
 	Status s;
 	int idx;
-
-	// All threads start at the same time
-	#pragma omp barrier
 
 	while(1)
 	{
@@ -153,8 +145,6 @@ bool insertToBuffer(int key, int val, Chunk *cur)
 	{
 		curbuf->entries[idx] = key_val_encode(key, val);
 
-		#pragma omp barrier
-
 		if(!curbuf->status.isInFreeze(&curbuf->status))
 		{
 			result = true;
@@ -197,7 +187,7 @@ bool createBuffer(int key, int val, Chunk *c, Chunk **curbuf)
 
 	buf = init_chunk(BUFFER, 20);
 
-	buf->entries[0] = key_val_encode(key, val); // buffer is created with the key
+	buf->entries[0] = key_val_encode(key, val); // buffer is created with the key/value pair
 
 	res = __atomic_compare_exchange_n(&c->buffer, &null_ptr, buf, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 
@@ -268,7 +258,6 @@ void freezeChunk(Chunk *c)
 
 			// c was frozen by someone else
 			case FROZEN:
-				c->markPtrs(c);
 				return;
 		}
 		break; // continue only if CAS from DELETE state failed
@@ -282,9 +271,6 @@ void freezeChunk(Chunk *c)
 
 	// from FREEZING to FROZEN using atomic XOR
 	c->status.aXor(&c->status, MASK_FROZEN_STATE);
-
-	// set the chunk pointers as deleted
-	c->markPtrs(c);
 }
 
 /**
@@ -311,7 +297,7 @@ void freezeRecovery(Chunk *cur, Chunk *prev)
 	// PHASE I: decide whether to split or to merge
 	while(1)
 	{
-		if(cur == head || (prev == head && isInFreeze))
+		if((cur->max == FIRST_CHUNK_MAX_KEY) || (cur == head) || (prev == head && isInFreeze))
 		{
 			toSplit = false;
 		}

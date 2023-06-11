@@ -10,6 +10,10 @@
 #include <limits.h>
 #include <omp.h>
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
 /* Chunk capacity */
 
 #define M 928
@@ -20,6 +24,10 @@
 
 #define MAX_CHUNKS 3
 
+/* First chunk maximal key */
+
+#define FIRST_CHUNK_MAX_KEY 20
+
 /* Masks for switching chunk states */
 
 #define MASK_FREEZING_STATE 3
@@ -28,12 +36,6 @@
 /* Empty enty identifier */
 
 #define EMPTY_ENTRY 0
-
-/* Mark pointer masks */
-
-#define mark(x) ((x) | 1)
-#define unmark(x) (((x) | 1) ^ 1)
-#define is_marked(x) (!!((x) & 1))
 
 /* Chunk states */
 
@@ -76,7 +78,6 @@ typedef struct Chunk
 	struct Chunk *next, *buffer;
 
 	bool (*entryFrozen)(struct Chunk *c, int idx);
-	void (*markPtrs)(struct Chunk *c);
 	int (*getKey)(struct Chunk *c, int idx);
 }Chunk;
 
@@ -124,10 +125,6 @@ void sort(Chunk *c);
 uint64_t key_val_encode(uint64_t key, uint64_t val);
 void key_val_decode(uint64_t keyVal, uint64_t *key, uint64_t *val);
 
-bool is_marked_ref(uintptr_t p);
-uintptr_t get_marked_ref(uintptr_t p);
-uintptr_t get_unmarked_ref(uintptr_t p);
-
 /* Status's methods */
 
 Status status_aIncIdx(Status *s);
@@ -143,7 +140,6 @@ States status_getState(Status *s);
 /* Chunk's methods */
 
 bool chunk_entryFrozen(Chunk *c, int idx);
-void chunk_markPtrs(struct Chunk *c);
 int chunk_getKey(Chunk *c, int idx);
 
 #endif
