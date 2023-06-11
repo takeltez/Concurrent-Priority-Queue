@@ -56,7 +56,7 @@ void create_queue(void)
 {
 	int i, max;
 
-	for(i = 0, max = 20; i < MAX_CHUNKS; max += 20, i++)
+	for(i = 0, max = FIRST_CHUNK_MAX_KEY; i < MAX_CHUNKS; max += FIRST_CHUNK_MAX_KEY, i++)
 	{
 		if (i == MAX_CHUNKS - 1)
 		{
@@ -158,7 +158,6 @@ Chunk *init_chunk(States state, uint32_t max)
 	c->status = init_status(state);
 
 	c->entryFrozen = chunk_entryFrozen;
-	c->markPtrs = chunk_markPtrs;
 	c->getKey = chunk_getKey;
 
 	c->next = NULL;
@@ -365,9 +364,6 @@ Chunk *split(Chunk *c)
 	int i, frt_idx, sec_idx;
 	uint32_t max_key;
 
-	// Unmark chunk for split
-	c->markPtrs(c);
-
 	state = INSERT;
 	max_key = c->max;
 
@@ -412,9 +408,6 @@ Chunk *split(Chunk *c)
 		second->next = NULL;
 	}
 
-	// Once split is finished, mark chunk as deleted again
-	c->markPtrs(c);
-
 	return first;
 }
 
@@ -439,9 +432,6 @@ Chunk *mergeFirstChunk(Chunk *c)
 	int i, idx;
 	int merges_left;
 	uint32_t max_key;
-
-	// Unmark 'buffer' and 'next' pointers to copy keys to the new first chunk
-	c->markPtrs(c);
 
 	state = DELETE;
 	max_key = c->max;
@@ -540,9 +530,6 @@ Chunk *mergeFirstChunk(Chunk *c)
 		tail = tail->next;
 	}
 
-	// Once merge is dode, mark 'buffer' and ''next' pointers as deleted again.
-	c->markPtrs(c);
-
 	return merged;
 }
 
@@ -621,56 +608,4 @@ void key_val_decode(uint64_t keyVal, uint64_t *key, uint64_t *val)
 
 	*key = keyVal >> 32;
 	*val = keyVal & mask;
-}
-
-/**
- * bool is_marked_ref(uintptr_t r)
- * 
- * Check either pointer 'marked' or not.
- * 
- * Parameters:
- * 	@r - pointer to check.
- * 
- * Returned value:
- * 	@true - pointer is 'marked'.
- * 	@false - otherwise.
- * 
- * **/
-bool is_marked_ref(uintptr_t r)
-{
-	return is_marked(r);
-}
-
-/**
- * uintptr_t get_marked_ref(uintptr_t r)
- * 
- * Set otherwise-unused low-order bit in pointer as 'marked'.
- * 
- * Parameters:
- * 	@r - pointer to 'mark'.
- * 
- * Returned value:
- * 	@mark(r) - 'marked' pointer.
- * 
- * **/
-uintptr_t get_marked_ref(uintptr_t r)
-{
-	return mark(r);
-}
-
-/**
- * uintptr_t get_unmarked_ref(uintptr_t r)
- * 
- * Set otherwise-unused low-order bit in pointer as 'unmarked'.
- * 
- * Parameters:
- * 	@r - pointer to 'unmark'.
- * 
- * Returned value:
- * 	@unmark(r) - 'unmarked' pointer.
- * 
- * **/
-uintptr_t get_unmarked_ref(uintptr_t r)
-{
-	return unmark(r);
 }
