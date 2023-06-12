@@ -414,7 +414,7 @@ Chunk *split(Chunk *c)
 /**
  * Chunk *mergeFirstChunk(Chunk *c)
  * 
- * Create a new DELETE chunks with M ordered keys taken from all current DELETE chnunks, and buffer.
+ * Create a new DELETE chunks with M ordered keys taken from all current DELETE chnunks and buffer.
  * 
  * Parameters:
  * 	@c -pointer to the current first DELETE chunk.
@@ -468,8 +468,15 @@ Chunk *mergeFirstChunk(Chunk *c)
 
 		idx = new->status.getIdx(&new->status);
 
+		// Check whether forzenIdx was overflowed by other threads
+		if((i = getFrzIdx(cur->status)) > M)
+		{
+			// If it was, set index on last element in chunk
+			i = M - 1;
+		}
+
 		// Copy keys from the current chunk
-		for(i = getFrzIdx(cur->status); cur->entries[i] != 0 && i < M && idx < M; i++)
+		for(; cur->entries[i] != 0 && i < M && idx < M; i++)
 		{
 			new->entries[idx] = cur->entries[i];
 			new->status.aIncIdx(&new->status);
