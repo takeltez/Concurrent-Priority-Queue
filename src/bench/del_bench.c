@@ -43,7 +43,7 @@ void set_delete_only_bench(void)
 	int i = 1;
 	double res;
 
-	printf("Delete-only benchmark:\n");
+	printf("\n#4 Delete-only benchmark\n\n");
 
 	for(i = 1; i <= 64; i += 8)
 	{
@@ -55,13 +55,19 @@ void set_delete_only_bench(void)
 		// Create queue
 		create_queue();
 
+		printf("Filling queue for benchmark test...\n\n");
+
 		// Prepare queue for test
 		fill_queue(WORKLOAD);
+
+		printf("\t---start test---\n");
+		printf("\tNumber of threads: %d\n", i);
 
 		// Run mixed benchmark with 20% deleteMin() operation persentage
 		res = run_delete_only_bench(i);
 
-		printf("\tNumber of threads: %d\n\tElapsed time: %f\n\n", i, res);
+		printf("\tElapsed time: %f sec.\n", res);
+		printf("\t---end test---\n\n");
 
 		// Destroy queue
 		destroy_queue();

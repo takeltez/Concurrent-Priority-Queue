@@ -15,6 +15,8 @@ Euro-Par 2016: 460-474*
 - Python version at least 3.6: `python3`
 - OpenMP: `libomp-dev`
 - pdflatex: `texlive-latex-base` and `texlive-latex-extra`
+- SLURM Scheduler: 	`slurm`
+- srun: `slurm-client`
 
 ### Makefile targets
 

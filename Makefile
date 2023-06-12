@@ -24,6 +24,9 @@ RM := rm
 INSTALL := install
 MKDIR := mkdir
 
+SRUN_PART := q_student
+SRUN_THREAD_NUM := 64
+
 QUEUE_SOURCES := $(wildcard $(SRC_DIR)/$(QUEUE_DIR)/*.c)
 BENCH_SOURCES := $(wildcard $(SRC_DIR)/$(BENCH_DIR)/*.c)
 
@@ -103,7 +106,7 @@ clean:
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
-	@python3 $(BENCHMARK_DIR)/$(BENCHMARK_NAME).py
+	@srun -p $(SRUN_PART) -c $(SRUN_THREAD_NUM) ./$(BIN_DIR)/$(TARGET)
 
 small-plot:
 	@echo "============================================"

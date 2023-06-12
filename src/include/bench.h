@@ -15,7 +15,7 @@
 
 double run_mixed_bench(int t, int p);
 
-void set_mixed_bench_half(void);
+void set_mixed_bench_50_del(void);
 void set_mixed_bench_80_del(void);
 void set_mixed_bench_20_del(void);
 
