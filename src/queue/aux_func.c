@@ -306,7 +306,7 @@ void keyCAS(uint64_t *mem, uint64_t old, uint64_t new)
  * **/
 bool chunkCAS(Chunk **c, Chunk *cur, Chunk *local)
 {
-	return  __atomic_compare_exchange_n(c, &cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	return __atomic_compare_exchange_n(c, &cur, local, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
 }
 
 /**
@@ -471,7 +471,7 @@ Chunk *mergeFirstChunk(Chunk *c)
 		// Check whether forzenIdx was overflowed by other threads
 		if((i = getFrzIdx(cur->status)) > M)
 		{
-			// If it was, set index on last element in chunk
+			// Set index on last element in chunk
 			i = M - 1;
 		}
 
