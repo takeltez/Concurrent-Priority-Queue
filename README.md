@@ -7,7 +7,7 @@ Implementation of **High Performance Lock-Free Priority Queue** based on
 CBPQ: High Performance Lock-Free Priority Queue.<br>
 Euro-Par 2016: 460-474*
 
-## How to use
+## Description
 
 ### Pre-requirements
 - GNU Compiler: `gcc`
@@ -18,11 +18,12 @@ Euro-Par 2016: 460-474*
 - SLURM Scheduler: 	`slurm`
 - srun: `slurm-client`
 
-### Makefile targets
+### Attention
+- In `Makefile` at **line 27** specify your own partition using by `srun` command.<br>
+- Run target `all` before any other target.<br>
+- Run target `small-bench` before `small-plot` and `report` targets.
 
-**Note:**<br>
-Run target `all` before any other target!<br>
-Run target `small-bench` before `small-plot` and `report` targets!
+### Makefile targets
 
 - `all`<br>
 Build executable and shared library files `bin/queue` and `lib/queue.so` respectively.

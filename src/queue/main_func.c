@@ -9,6 +9,7 @@ Chunk *head = NULL;
  * 
  * Parameters:
  * 	@key - key to insert.
+ * 	@val - value to insert.
  * 
  * **/
 void insert(int key, int val)
@@ -25,7 +26,7 @@ void insert(int key, int val)
 		getChunkByKey(&cur, &prev, key);
 
 		// If it is the first chunk, insert in the buffer instead
-		if(cur == head)
+		if(cur == head && cur->max == FIRST_CHUNK_MAX_KEY)
 		{
 			if(insertToBuffer(key, val, cur))
 			{
@@ -37,27 +38,29 @@ void insert(int key, int val)
 			}
 		}
 
-		s = cur->status;
-		idx = getIdx(s);
-		
-		// atomically increase the index in the status
-		cur->status.aIncIdx(&cur->status);
-
-		// insert into a non-full and non-frozen chunk
-		if(idx < M && !s.isInFreeze(&s))
+		#pragma omp critical
 		{
-			cur->entries[idx] = key_val_encode(key, val);
-
-			if(!cur->status.isInFreeze(&cur->status))
-			{
-				return;
-			}
-
-			if(!cur->entryFrozen(cur, idx))
-			{
-				return; // key got copied
-			}
+			s = cur->status;
+			idx = getIdx(s);
+			
+			// atomically increase the index in the status
+			cur->status.aIncIdx(&cur->status);
 		}
+			// insert into a non-full and non-frozen chunk
+			if(idx < M && !s.isInFreeze(&s))
+			{
+				cur->entries[idx] = key_val_encode(key, val);
+
+				if(!cur->status.isInFreeze(&cur->status))
+				{
+					return;
+				}
+
+				if(!cur->entryFrozen(cur, idx))
+				{
+					return; // key got copied
+				}
+			}
 
 		// restructure the CBQP, then retry
 		freezeChunk(cur);
@@ -82,13 +85,16 @@ int deleteMin(void)
 
 	while(1)
 	{
-		cur = head;
-		s = cur->status;
+		#pragma omp critical
+		{
+			cur = head;
+			s = cur->status;
 
-		idx = getFrzIdx(s);
+			idx = getFrzIdx(s);
 
-		// atomically increase the frozenInd in the status
-		cur->status.aIncFrzIdx(&cur->status);
+			// atomically increase the frozenInd in the status
+			cur->status.aIncFrzIdx(&cur->status);
+		}
 
 		if(idx < M && !s.isInFreeze(&s)) // delete from not full and non≠frozen chunk
 		{
@@ -108,12 +114,13 @@ int deleteMin(void)
  * Insert key/value pair to buffer.
  * 
  * Parameters:
- * @key - key to insert.
- * @cur - pointer to the first chunk.
+ * 	@key - key to insert.
+ * 	@val - value to insert.
+ * 	@cur - pointer to the first chunk.
  * 
  * Returned value:
- * @true - key is placed into buffer.
- * @false - hey is not placed into buffer.
+ * 	@true - key is placed into buffer.
+ * 	@false - hey is not placed into buffer.
  * 
  * **/
 bool insertToBuffer(int key, int val, Chunk *cur)
@@ -135,11 +142,14 @@ bool insertToBuffer(int key, int val, Chunk *cur)
 		}
 	}
 
-	s = curbuf->status;
-	idx = getIdx(s);
+	#pragma omp critical
+	{
+		s = curbuf->status;
+		idx = getIdx(s);
 
-	// atomically increase the index in the status
-	curbuf->status.aIncIdx(&curbuf->status);
+		// atomically increase the index in the status
+		curbuf->status.aIncIdx(&curbuf->status);
+	}
 
 	if(idx < M && !s.isInFreeze(&s))
 	{
@@ -156,7 +166,7 @@ bool insertToBuffer(int key, int val, Chunk *cur)
 	}
 
 phaseII: // PHASE II: first chunk merges with buffer before insert ends
-	usleep(0); // yield, give other threads a chance
+	usleep(100); // wait untill other thread add its entries in buffer
 	freezeChunk(cur);
 	freezeRecovery(cur, NULL);
 
@@ -166,10 +176,11 @@ phaseII: // PHASE II: first chunk merges with buffer before insert ends
 /**
  * bool createBuffer(int key, Chunk *c, Chunk **buf)
  * 
- * Create buffer for the first chunk, add key into this buffer and store pointer to this buffer into *buf.
+ * Create buffer for the first chunk, add key/value pair into this buffer and store pointer to this buffer into *buf.
  * 
  * Parameters:
  * 	@key - key to be added into buffer.
+ * 	@val - value to be added into buffer.
  * 	@c - pointer on the first chunk.
  * 	@buf -double pointer to the buffer
  * 
@@ -181,7 +192,6 @@ phaseII: // PHASE II: first chunk merges with buffer before insert ends
 bool createBuffer(int key, int val, Chunk *c, Chunk **curbuf)
 {
 	Chunk *buf, *null_ptr;
-	bool res;
 
 	null_ptr = NULL;
 
@@ -189,11 +199,20 @@ bool createBuffer(int key, int val, Chunk *c, Chunk **curbuf)
 
 	buf->entries[0] = key_val_encode(key, val); // buffer is created with the key/value pair
 
-	res = __atomic_compare_exchange_n(&c->buffer, &null_ptr, buf, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+	if(__atomic_compare_exchange_n(&c->buffer, &null_ptr, buf, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED))
+	{
+		*curbuf = c->buffer; // update buffer ptr (ours or someone’s else)
 
-	*curbuf = buf; // update buffer ptr (ours or someone’s else)
+		(*curbuf)->status.aIncIdx(&(*curbuf)->status); // atomically increase the index in the status
 
-	return res;
+		return true;
+	}
+	else
+	{
+		*curbuf = c->buffer; // update buffer ptr (ours or someone’s else)
+
+		return false;
+	}
 }
 
 /**
@@ -357,7 +376,6 @@ void freezeRecovery(Chunk *cur, Chunk *prev)
 				return;
 			}
 		}
-
 		// look for new location; finish if the frozen cur is not found
 		if(!getChunk(&cur, &p))
 		{
