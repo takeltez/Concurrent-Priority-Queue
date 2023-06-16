@@ -59,7 +59,7 @@ void set_insert_only_bench(void)
 	int i = 1;
 	double res;
 
-	printf("\n#5 Insert-only benchmark\n\n");
+	printf("\n#5 Insertion-only workload\n\n");
 
 	for(i = 1; i <= 64; i += 8)
 	{

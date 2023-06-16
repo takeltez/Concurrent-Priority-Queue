@@ -61,12 +61,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) $(CFLAGS) -fPIC -I$(SRC_DIR)/$(INCLUDE_DIR) -c -o $@ $<
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/$(QUEUE_DIR)/%.c
-	@echo "============================================"
 	@echo "Compiling $(QUEUE_SOURCES)"
 	@$(CC) $(CFLAGS) -fPIC -I$(SRC_DIR)/$(INCLUDE_DIR) -c -o $@ $<
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/$(BENCH_DIR)/%.c
-	@echo "============================================"
 	@echo "Compiling $(BENCH_SOURCES)"
 	@$(CC) $(CFLAGS) -fPIC -I$(SRC_DIR)/$(INCLUDE_DIR) -c -o $@ $<
 
@@ -76,7 +74,6 @@ $(TARGET): $(OBJECTS)
 	@$(CC) $(CFLAGS) -o $@ $^
 
 $(TARGET).so: $(OBJECTS)
-	@echo "============================================"
 	@echo "Linking $(TARGET).so"
 	@$(CC) $(CFLAGS) -fPIC -shared -o $@ $^
 
@@ -106,13 +103,21 @@ clean:
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
-	@srun -p $(SRUN_PART) -c $(SRUN_THREAD_NUM) ./$(BIN_DIR)/$(TARGET)
+	@srun -p $(SRUN_PART) -c $(SRUN_THREAD_NUM) $(BIN_DIR)/$(TARGET)
 
 small-plot:
 	@echo "============================================"
 	@echo "Plotting small-bench results"
-	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME).tex}"'
-	@echo "Created $(PLOT_DIR)/$(PLOT_NAME).pdf"
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)1.tex}"'
+	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)1.pdf"
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)2.tex}"'
+	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)2.pdf"
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)3.tex}"'
+	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)3.pdf"
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)4.tex}"'
+	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)4.pdf"
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)5.tex}"'
+	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)5.pdf"
 
 report: small-plot
 	@echo "============================================"
@@ -121,7 +126,7 @@ report: small-plot
 	@echo "Created $(REPORT_DIR)/$(REPORT_NAME).pdf"
 
 zip:
-	@zip -r $(ARCH_NAME).zip $(BENCHMARK_DIR)/$(BENCHMARK_NAME).py $(SRC_DIR)/* $(PLOT_DIR)/$(PLOT_NAME).tex $(PLOT_DIR)/$(PLOT_NAME).pdf $(REPORT_DIR)/$(REPORT_NAME).tex $(REPORT_DIR)/$(REPORT_NAME).pdf Makefile README.md
+	@zip -r $(ARCH_NAME).zip $(BENCHMARK_DIR)/$(BENCHMARK_NAME).py $(SRC_DIR)/* $(PLOT_DIR)/*.tex $(PLOT_DIR)/*.pdf $(REPORT_DIR)/*.tex $(REPORT_DIR)/*.pdf Makefile README.md
 
 .PHONY: all clean small-bench small-plot report zip
 
