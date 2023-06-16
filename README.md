@@ -19,7 +19,7 @@ Euro-Par 2016: 460-474*
 - srun: `slurm-client`
 
 ### Attention
-- In `Makefile` at **line 27** specify your own partition using by `srun` command.<br>
+- In `Makefile` specify your own `srun` partition by changing `SRUN_PART` variable at **line 27**.<br>
 - Run target `all` before any other target.<br>
 - Run target `small-bench` before `small-plot` and `report` targets.
 
@@ -29,7 +29,7 @@ Euro-Par 2016: 460-474*
 Build executable and shared library files `bin/queue` and `lib/queue.so` respectively.
 
 - `small-bench`<br>
-Execute short representative benchmark using `benchmark/benchmark.py` and collect data in `data` directory.
+Execute short representative benchmark using `benchmark/benchmark.py` and collect data for plots in `data` directory.
 
 - `small-plot`<br>
 Generate `plot.pdf` in `plots` directory.

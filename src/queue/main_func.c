@@ -166,7 +166,7 @@ bool insertToBuffer(int key, int val, Chunk *cur)
 	}
 
 phaseII: // PHASE II: first chunk merges with buffer before insert ends
-	usleep(100); // wait untill other thread add its entries in buffer
+	usleep(100); // wait untill other threads add its entries into buffer
 	freezeChunk(cur);
 	freezeRecovery(cur, NULL);
 

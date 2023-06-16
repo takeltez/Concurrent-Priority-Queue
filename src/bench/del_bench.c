@@ -43,7 +43,7 @@ void set_delete_only_bench(void)
 	int i = 1;
 	double res;
 
-	printf("\n#4 Delete-only benchmark\n\n");
+	printf("\n#4 Deletion-only workload\n\n");
 
 	for(i = 1; i <= 64; i += 8)
 	{

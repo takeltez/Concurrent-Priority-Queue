@@ -4,7 +4,7 @@
 /**
  * void fill_queue(int n)
  * 
- * Add n random keys to queue.
+ * Add n random key/value pairs to queue.
  * 
  * Parameters:
  * 	@n - number of keys
