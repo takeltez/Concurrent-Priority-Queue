@@ -59,7 +59,7 @@ double run_mixed_bench(int t, int p)
 /**
  * void set_mixed_bench_50_del(void)
  * 
- * Prepare Mixed benchmark with 50/50 operations persentage for run.
+ * Prepare Mixed benchmark with 50% deleteMin() operation persentage for run.
  * 
  * **/
 void set_mixed_bench_50_del(void)
@@ -71,7 +71,7 @@ void set_mixed_bench_50_del(void)
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.5;
 
-	printf("\n#1 Mixed workload with insert()/deleteMin() operation persentage: 50%%/50%%\n\n");
+	printf("\n#1Mixed workload with 50%% of DeteleMin() operations\n\n");
 
 	for(i = 1; i <= 64; i += 8)
 	{
@@ -117,7 +117,7 @@ void set_mixed_bench_80_del(void)
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.8;
 
-	printf("\n#2 Mixed workload with insert()/deleteMin() operation persentage: 20%%/80%%\n\n");
+	printf("\n#2 Mixed workload with 80%% of DeteleMin() operations\n\n");
 
 	for(i = 1; i <= 64; i += 8)
 	{
@@ -163,7 +163,7 @@ void set_mixed_bench_20_del(void)
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.2;
 
-	printf("\n#3 Mixed workload with insert()/deleteMin() operation persentage: 80%%/20%%\n\n");
+	printf("\n#3 Mixed workload with 20%% of DeteleMin() operations\n\n");
 
 	for(i = 1; i <= 64; i += 8)
 	{
