@@ -36,7 +36,7 @@ class Benchmark:
 if __name__ == "__main__":
 
 	basedir = os.path.dirname(os.path.abspath(__file__))
-	binary = ctypes.CDLL(f"./lib/queue.so")
+	binary = ctypes.CDLL(f"{basedir}/../lib/queue.so")
 
 	num_threads = [1,8,16,24,32,40,48,56,64]
 
