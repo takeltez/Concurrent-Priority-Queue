@@ -11,28 +11,28 @@
 
 #define RAND_RANGE 100
 
-typedef struct return_values
+typedef struct threads_times
 {
 	double time[9];
-}return_values;
+}threads_times;
 
 /* Mixed benchmark implementation */
 
 double run_mixed_bench(int t, int p);
 
-return_values set_mixed_bench_50_del(void);
-return_values set_mixed_bench_80_del(void);
-return_values set_mixed_bench_20_del(void);
+threads_times set_mixed_bench_50_del(void);
+threads_times set_mixed_bench_80_del(void);
+threads_times set_mixed_bench_20_del(void);
 
 /* Delete-only benchmark implementation */
 
 double run_delete_only_bench(int t);
-return_values set_delete_only_bench(void);
+threads_times set_delete_only_bench(void);
 
 /* Insert-only benchmark implementation */
 
 double run_insert_only_bench(int t);
-return_values set_insert_only_bench(void);
+threads_times set_insert_only_bench(void);
 
 /* Common functions */
 

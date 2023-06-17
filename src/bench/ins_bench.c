@@ -53,13 +53,16 @@ double run_insert_only_bench(int t)
  * 
  * Prepare Insert-only benchmark for run.
  * 
+ * Rerurned value:
+ * 	@result - structure with time measurements for different number of threads.
+ * 
  * **/
-return_values set_insert_only_bench(void)
+threads_times set_insert_only_bench(void)
 {
 	int i, j;
 	double res;
 
-	return_values result;
+	threads_times result;
 
 	printf("\n#5 Insertion-only workload\n\n");
 
