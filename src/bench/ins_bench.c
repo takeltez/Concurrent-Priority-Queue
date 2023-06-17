@@ -54,14 +54,16 @@ double run_insert_only_bench(int t)
  * Prepare Insert-only benchmark for run.
  * 
  * **/
-void set_insert_only_bench(void)
+return_values set_insert_only_bench(void)
 {
-	int i = 1;
+	int i, j;
 	double res;
+
+	return_values result;
 
 	printf("\n#5 Insertion-only workload\n\n");
 
-	for(i = 1; i <= 64; i += 8)
+	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
 		if(i == 9)
 		{
@@ -85,7 +87,11 @@ void set_insert_only_bench(void)
 		printf("\tElapsed time: %f sec.\n", res);
 		printf("\t---end test---\n\n");
 
+		result.time[j] = res;
+
 		// Destroy queue
 		destroy_queue();
 	}
+
+	return result;
 }

@@ -87,11 +87,11 @@ install:
 
 clean:
 	@echo "============================================"
-	@echo "Cleaning directories $(LIB_DIR)/, $(BIN_DIR)/ and $(BUILD_DIR)/"
+	@echo "Cleaning directories $(LIB_DIR)/, $(DATA_DIR)/, $(BIN_DIR)/ and $(BUILD_DIR)/"
 	@$(RM) -rf $(LIB_DIR)
+	@$(RM) -rf $(DATA_DIR)
 	@$(RM) -rf $(BIN_DIR)
 	@$(RM) -rf $(BUILD_DIR)
-	@$(RM) -rf $(DATA_DIR)
 
 	@echo "Cleaning directories $(PLOT_DIR)/ and $(REPORT_DIR)/ from extra files"
 	@bash -c 'cd $(PLOT_DIR) && find . -type f -not -name "*.tex" -delete'
@@ -103,20 +103,20 @@ clean:
 small-bench: $(DATA_DIR)
 	@echo "============================================"
 	@echo "Running small-bench"
-	@srun -p $(SRUN_PART) -c $(SRUN_THREAD_NUM) $(BIN_DIR)/$(TARGET)
+	@srun -p $(SRUN_PART) -c $(SRUN_THREAD_NUM) python $(BENCHMARK_DIR)/$(BENCHMARK_NAME).py
 
 small-plot:
 	@echo "============================================"
 	@echo "Plotting small-bench results"
-	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)1.tex}"'
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data}\input{$(PLOT_NAME)1.tex}"'
 	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)1.pdf"
-	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)2.tex}"'
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data}\input{$(PLOT_NAME)2.tex}"'
 	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)2.pdf"
-	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)3.tex}"'
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data}\input{$(PLOT_NAME)3.tex}"'
 	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)3.pdf"
-	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)4.tex}"'
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data}\input{$(PLOT_NAME)4.tex}"'
 	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)4.pdf"
-	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data/$$(ls ../data/ | sort -r | head -n 1)}\input{$(PLOT_NAME)5.tex}"'
+	@bash -c 'cd $(PLOT_DIR) && pdflatex "\batchmode\newcommand{\DATAPATH}{../data}\input{$(PLOT_NAME)5.tex}"'
 	@echo "Created $(PLOT_DIR)/$(PLOT_NAME)5.pdf"
 
 report: small-plot
