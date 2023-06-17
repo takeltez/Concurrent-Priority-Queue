@@ -62,18 +62,19 @@ double run_mixed_bench(int t, int p)
  * Prepare Mixed benchmark with 50% deleteMin() operation persentage for run.
  * 
  * **/
-void set_mixed_bench_50_del(void)
+return_values set_mixed_bench_50_del(void)
 {
-	int i = 1;
-	int p;
+	int i, j, p;
 	double res;
+
+	return_values result;
 
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.5;
 
-	printf("\n#1Mixed workload with 50%% of DeteleMin() operations\n\n");
+	printf("\n#1 Mixed workload with 50%% of DeleteMin() operations\n\n");
 
-	for(i = 1; i <= 64; i += 8)
+	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
 		if(i == 9)
 		{
@@ -97,9 +98,13 @@ void set_mixed_bench_50_del(void)
 		printf("\tElapsed time: %f sec.\n", res);
 		printf("\t---end test---\n\n");
 
+		result.time[j] = res;
+
 		// Destroy queue
 		destroy_queue();
 	}
+
+	return result;
 }
 
 /**
@@ -108,18 +113,19 @@ void set_mixed_bench_50_del(void)
  * Prepare Mixed benchmark with 80% deleteMin() operation persentage for run.
  * 
  * **/
-void set_mixed_bench_80_del(void)
+return_values set_mixed_bench_80_del(void)
 {
-	int i = 1;
-	int p;
+	int i, j, p;
 	double res;
+
+	return_values result;
 
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.8;
 
 	printf("\n#2 Mixed workload with 80%% of DeteleMin() operations\n\n");
 
-	for(i = 1; i <= 64; i += 8)
+	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
 		if(i == 9)
 		{
@@ -143,9 +149,13 @@ void set_mixed_bench_80_del(void)
 		printf("\tElapsed time: %f sec.\n", res);
 		printf("\t---end test---\n\n");
 
+		result.time[j] = res;
+
 		// Destroy queue
 		destroy_queue();
 	}
+
+	return result;
 }
 
 /**
@@ -154,18 +164,19 @@ void set_mixed_bench_80_del(void)
  * Prepare Mixed benchmark with 20% deleteMin() operation persentage for run.
  * 
  * **/
-void set_mixed_bench_20_del(void)
+return_values set_mixed_bench_20_del(void)
 {
-	int i = 1;
-	int p;
+	int i, j, p;
 	double res;
 
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.2;
 
+	return_values result;
+
 	printf("\n#3 Mixed workload with 20%% of DeteleMin() operations\n\n");
 
-	for(i = 1; i <= 64; i += 8)
+	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
 		if(i == 9)
 		{
@@ -189,7 +200,11 @@ void set_mixed_bench_20_del(void)
 		printf("\tElapsed time: %f sec.\n", res);
 		printf("\t---end test---\n\n");
 
+		result.time[j] = res;
+
 		// Destroy queue
 		destroy_queue();
 	}
+
+	return result;
 }

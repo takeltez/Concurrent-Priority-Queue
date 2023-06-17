@@ -47,7 +47,7 @@ void fill_queue(int n)
 void small_bench(void)
 {
 	double tic, toc;
-	
+
 	tic = omp_get_wtime();
 
 	// Mixed benchmark

@@ -38,14 +38,16 @@ double run_delete_only_bench(int t)
  * Prepare Delete-only benchmark for run.
  * 
  * **/
-void set_delete_only_bench(void)
+return_values set_delete_only_bench(void)
 {
-	int i = 1;
+	int i, j;
 	double res;
+
+	return_values result;
 
 	printf("\n#4 Deletion-only workload\n\n");
 
-	for(i = 1; i <= 64; i += 8)
+	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
 		if(i == 9)
 		{
@@ -69,7 +71,11 @@ void set_delete_only_bench(void)
 		printf("\tElapsed time: %f sec.\n", res);
 		printf("\t---end test---\n\n");
 
+		result.time[j] = res;
+
 		// Destroy queue
 		destroy_queue();
 	}
+
+	return result;
 }

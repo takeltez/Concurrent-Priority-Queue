@@ -82,21 +82,21 @@ Also we would like to notice that we, of course, tested our queue with much more
 \begin{figure}[H]
   \centering
   \includegraphics{../plots/plot1.pdf}
-  \caption{Mixed workload with 50\% of \textit{DeteleMin()} operations.}
+  \caption{Mixed workload with 50\% of deletion operations.}
   \label{fig:plot1}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics{../plots/plot2.pdf}
-  \caption{Mixed workload with 80\% of \textit{DeteleMin()} operations.}
+  \caption{Mixed workload with 80\% of deletion operations.}
   \label{fig:plot2}
 \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics{../plots/plot3.pdf}
-  \caption{Mixed workload with 20\% of \textit{DeteleMin()} operations.}
+  \caption{Mixed workload with 20\% of deletion operations.}
   \label{fig:plot3}
 \end{figure}
 
@@ -117,8 +117,8 @@ Also we would like to notice that we, of course, tested our queue with much more
 \section{Conclusion}
 In this report we presented a novel concurrent, linearizable, and lock-free design of the priority queue, called CBPQ, based on [1]. CBPQ cleverly combines the chunked linked-list and the performance advantage of the F\&I atomic instruction.\par
 According to the benchmark results, as we can see from plots, scalability of CBPQ increases with increasing number of \textit{Insert()} operations. So, we get benchmark results as follows.\par
-Best scalability was achieved for Insertion-only workload. Mixed workloads with 20\%, 50\% and 80\% of \textit{DeteleMin()} operations take second, third and fourh places respectively. Deletion-only workload barely has any speedup. That happens because as was already mentioned before, deletion is kind of cheap operation even for one thread and this is really hard to get any speedup for such small number of elements stored into queue.\par
-In conclusion, we would like to say that CBPQ is quite sophisticated structure and we assume that our implementation of CBPQ is not one hundred percent fits to all ideas described in [1]. Most likely, something was missed and maybe because of that our queue doesn't scale as well as it might be. However, we believe that in terms of educational puproses we achieved a decent results and learn a lot of valuable things about multi-threads programming.
+Best scalability was achieved for Insertion-only workload. Mixed workloads with 20\%, 50\% and 80\% of \textit{DeteleMin()} operations take second, third and fourh places respectively. Deletion-only workload barely has any speedup. That happens because as was already mentioned before, deletion is kind of cheap operation even for one thread and this is really hard to get any speedup for given number of elements stored into queue.\par
+In conclusion, we would like to say that CBPQ is quite sophisticated structure and we assume that our implementation of CBPQ is not one hundred percent fits to all ideas described in [1]. Most likely, something was missed and maybe because of that our queue doesn't scale as well as it might be. However, we believe that in terms of educational puproses we achieved a decent results and learned a lot of valuable things about multi-threads programming.
 
 \pagebreak
 \section*{References}
