@@ -37,13 +37,16 @@ double run_delete_only_bench(int t)
  * 
  * Prepare Delete-only benchmark for run.
  * 
+ * Rerurned value:
+ * 	@result - structure with time measurements for different number of threads.
+ * 
  * **/
-return_values set_delete_only_bench(void)
+threads_times set_delete_only_bench(void)
 {
 	int i, j;
 	double res;
 
-	return_values result;
+	threads_times result;
 
 	printf("\n#4 Deletion-only workload\n\n");
 

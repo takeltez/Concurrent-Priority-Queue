@@ -61,13 +61,16 @@ double run_mixed_bench(int t, int p)
  * 
  * Prepare Mixed benchmark with 50% deleteMin() operation persentage for run.
  * 
+ * Rerurned value:
+ * 	@result - structure with time measurements for different number of threads.
+ * 
  * **/
-return_values set_mixed_bench_50_del(void)
+threads_times set_mixed_bench_50_del(void)
 {
 	int i, j, p;
 	double res;
 
-	return_values result;
+	threads_times result;
 
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.5;
@@ -112,13 +115,16 @@ return_values set_mixed_bench_50_del(void)
  * 
  * Prepare Mixed benchmark with 80% deleteMin() operation persentage for run.
  * 
+ * Rerurned value:
+ * 	@result - structure with time measurements for different number of threads.
+ * 
  * **/
-return_values set_mixed_bench_80_del(void)
+threads_times set_mixed_bench_80_del(void)
 {
 	int i, j, p;
 	double res;
 
-	return_values result;
+	threads_times result;
 
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.8;
@@ -163,8 +169,11 @@ return_values set_mixed_bench_80_del(void)
  * 
  * Prepare Mixed benchmark with 20% deleteMin() operation persentage for run.
  * 
+ * Rerurned value:
+ * 	@result - structure with time measurements for different number of threads.
+ * 
  * **/
-return_values set_mixed_bench_20_del(void)
+threads_times set_mixed_bench_20_del(void)
 {
 	int i, j, p;
 	double res;
@@ -172,7 +181,7 @@ return_values set_mixed_bench_20_del(void)
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.2;
 
-	return_values result;
+	threads_times result;
 
 	printf("\n#3 Mixed workload with 20%% of DeteleMin() operations\n\n");
 

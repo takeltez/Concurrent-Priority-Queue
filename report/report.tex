@@ -11,7 +11,7 @@
 \begin{document}
 
 \title{Project in Advanced Multiprocessor Programming}
-\author[1]{Aleksei Karasev - 12227646\\}
+\author[1]{Aleksei Karasev - 12227646}
 \author[2]{Mariana da Silva Barros - 12202389}
 \affil[1]{MSc student of Computer Engineering, TU Wien}
 \affil[2]{MSc student of Computer Engineering, TU Wien}
@@ -62,7 +62,7 @@ Once deletion is done thread increases value of frozen index using atomic F\&I i
 \paragraph{Worst-case bounds estimation}\mbox{}\par 
 According to information written above it becomes pretty obvious that the most expencive operation of our queue is restructure process.\par
 Considering this fact, we can state that worst case of insertion in CBPQ is a situation when all elements inserted only into the first chunk as insertion into the first chunk requires queue to be restructured every time.\par
-In deletion operation worst case appears when all elements have been deleted from the current first chunk and we need to execute the restructure of CBPQ in order to get key from other "DELETION" chunk.\newline\par
+In deletion operation worst case appears when all elements have been deleted from the current first chunk and we need to execute the restructure of CBPQ in order to get key from other \emph{DELETION} chunk.\newline\par
 This section gives only a bird's eye overview of how CPBQ works. For any specific details we, again, refer you to the paper [1].
 
 \subsection{Project Structure}
