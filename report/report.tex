@@ -36,7 +36,7 @@ The more detailed description of how CBPQ works will be considered in next secti
 As was already mentioned before CBPQ based on chunked linked-list. In particular, queue contains three chunks in the begining.\par
 First chunk is the special one which stores key-value pairs with highest priority (key range $0 \leqslant 20$). This is the only chunk which supports \textit{deleteMin} operation and doesn't permit direct insertion. In order to put elements into first chunk we should use assosiated buffer as discussed below.\par
 The remaining two chunks serve for insertion only and filled without buffer. Key ranges of second and third chunks are $21 \leqslant 40$ and $41 \leqslant 4294967295$ respectively.\par
-Due to lack of space we omit concrete description of chunk structure and its properties which might be found in paper our work based on. [1]\par
+Due to lack of space we omit concrete description of chunk structure and its properties which might be found in paper our work based on: [1].\par
 Now, we would like to give a brief explanation of \textit{insert} and \textit{deleteMin} operations usage and take a look on several cases which might appear during queue exploitation.
 
 \paragraph{Insertion into the first chunk}\mbox{}\par
@@ -66,9 +66,10 @@ In deletion operation worst case appears when all elements have been deleted fro
 This section gives only a bird's eye overview of how CPBQ works. For any specific details we, again, refer you to the paper [1].
 
 \subsection{Project Structure}
-Project contains several directories:\textit{ benchmark/} directory which stores script to run benchmark and collect data for plots construction, \textit{plots/} and \textit{report/} directories for plots and report storage respectively and \textit{src/} directory which contains all benchmark's and CPBQ's sources.\par
+Project contains several directories: \textit{benchmark/} directory which stores script to run benchmark and collect data for plots construction, \textit{plots/} and \textit{report/} directories for plots and report storage respectively and \textit{src/} directory which contains all benchmark's and CPBQ's sources.\par
 Apart from that there are two files: \textit{Makefile} which serves to build and run benchmark and \textit{README.md} which contains project description.\par
-\textbf{Read README.md carefully before use any Makefile targets!}
+\textbf{Read README.md carefully before use any Makefile targets!}\par
+All project's sources might be found in [4].
 
 \section{Performance Evaluation}
 The provided benchmark is a set of five tests each of which runs main CBPQ operations. Before each test we fill our queue with 10.000 elements in order to don't run our benchmark for empty queue.\par
@@ -126,5 +127,6 @@ In conclusion, we would like to say that CBPQ is quite sophisticated structure a
 \item{Anastasia Braginsky, Nachshon Cohen, Erez Petrank: CBPQ: High Performance Lock-Free Priority Queue. Euro-Par 2016: 460-474}
 \item{OpenMP 5.2 API Syntax Reference Guide: \url{https://www.openmp.org/wp-content/uploads/OpenMPRefCard-5-2-web.pdf}}
 \item{Built-in Functions for Memory Model Aware Atomic Operations: \url{https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#Built-in-Functions-for-Memory-Model-Aware-Atomic-Operations}}
+\item{Concurrent-Priority-Queue: \url{https://github.com/takeltez/Concurrent-Priority-Queue}}
 \end{enumerate}
 \end{document}
