@@ -5,15 +5,11 @@
 
 \begin{document}
   \begin{tikzpicture}
-    \begin{axis}[xtick={1,8,16,24,32,40,48,56,64},  % The ticks on the x-axis
-                 xlabel={number of threads},        % Label of the x-axis
-                 ylabel={running time (sec.)},             % Label of the y-axis
+    \begin{axis}[xtick={1,8,16,24,32,40,48,56,64},
+                 xlabel={number of threads},
+                 ylabel={running time (sec.)},
                  ]
-
-      % Each graph is added via \addplot and a .data file, and
-      % add a legend entry for the previous graph.
       \addplot table {\DATAPATH/smallbench1.data};
-
     \end{axis}
   \end{tikzpicture}
 \end{document}
