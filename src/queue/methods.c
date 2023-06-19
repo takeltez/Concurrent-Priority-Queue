@@ -84,7 +84,7 @@ int status_getIdx(Status *s)
 }
 
 /**
- * bool status_CAS(struct Status *s, struct Status localS, struct Status newS)
+ * bool status_CAS(Status *s, Status localS, Status newS)
  * 
  * Comapre status 's' with status 'localS'.
  * If equal, replace value stored in 's' with value 'newS'.
@@ -118,7 +118,7 @@ bool status_CAS(Status *s, Status localS, Status newS)
 }
 
 /**
- * void status_aOr(struct Status *s, int mask)
+ * void status_aOr(Status *s, int mask)
  * 
  * Make binary 'or' operation to switch between states.
  * 
@@ -139,7 +139,7 @@ void status_aOr(Status *s, int mask)
 }
 
 /**
- * void status_aXor(struct Status *s, int mask)
+ * void status_aXor(Status *s, int mask)
  * 
  * Make binary 'xor' operation to switch between states.
  * 
