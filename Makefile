@@ -1,7 +1,7 @@
 TARGET := queue
 
 CC := gcc
-CFLAGS := -O0 -MD -Wall -Wextra -Werror -fopenmp -g
+CFLAGS := -O0 -MD -Wall -Wextra -Werror -fopenmp
 
 LIB_DIR := lib
 BIN_DIR := bin
