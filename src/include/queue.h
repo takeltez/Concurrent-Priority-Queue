@@ -130,9 +130,9 @@ Status status_aIncIdx(Status *s);
 Status status_aIncFrzIdx(Status *s);
 bool status_isInFreeze(Status *s);
 int status_getIdx(Status *s);
-bool status_CAS(struct Status *s, struct Status localS, struct Status newS);
-void status_aOr(struct Status *s, int mask);
-void status_aXor(struct Status *s, int mask);
+bool status_CAS(Status *s, Status localS, Status newS);
+void status_aOr(Status *s, int mask);
+void status_aXor(Status *s, int mask);
 void status_set(Status *s, States state, int idx, int frozenInd);
 States status_getState(Status *s);
 
