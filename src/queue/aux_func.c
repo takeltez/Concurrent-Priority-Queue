@@ -2,51 +2,6 @@
 #include "bench.h"
 
 /**
- * void print_queue(Chunk *root)
- * 
- * Print queue state.
- * 
- * Parameters:
- * 	@root - pointer to queue head.
- * 
- * **/
-void print_queue(Chunk *root)
-{
-	if(!root)
-	{
-		printf("Queue is not allocated yet\n");
-
-		return;
-	}
-
-	uint64_t key, val;
-	int i = 1;
-	int j;
-
-	Chunk *c = root;
-
-	while(c)
-	{
-		printf("Chunk[%d]:\n\tStatus propirties:\n\t\tstate = %u\n\t\tindex = %u\n\t\tfrozenInd = %u\n",
-		       i, c->status.state, c->status.index, c->status.frozenInd);
-
-		printf("\tChunk properties:\n\t\tmax = %u\n", c->max);
-
-		printf("\t\tEntries:\n");
-
-		for (j = 0; c->entries[j] != 0 && j < M; j++)
-		{
-			key_val_decode(c->entries[j], &key, &val);
-
-			printf("\t\t\tentry[%d]: key = %lu, value = %lu\n", j, key, val);
-		}
-
-		c = c->next;
-		i++;
-	}
-}
-
-/**
  * void create_queue(void)
  * 
  * Create queue.

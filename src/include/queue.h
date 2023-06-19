@@ -102,7 +102,6 @@ void freezeKeys(Chunk *c);
 
 void create_queue(void);
 void destroy_queue(void);
-void print_queue(Chunk *root);
 
 Status init_status(States state);
 Chunk *init_chunk(States state, uint32_t max);
