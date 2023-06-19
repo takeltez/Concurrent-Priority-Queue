@@ -19,66 +19,97 @@
 
 \section{Introduction}
 Priority queues serve as an important basic tool in algorithmic design.
-They are widely used in a variety of applications and systems, such as simulation systems, job scheduling (in computer systems), networking (e.g., routing and realtime bandwidth management), file compression, numerical computations, and
-more. With the proliferation of modern parallel platforms, the need for a highperformance concurrent implementation of the priority queue has become acute.\par
-A priority queue (PQ) supports two operations: \textit{insert} and \textit{deleteMin}. The
-abstract definition of a PQ provides a set of key-value pairs, where the key
-represents a priority. The \textit{insert()} method inserts a new key-value pair into the
-set (the keys don’t have to be unique), and the \textit{deleteMin()} method removes and
-returns the value of the key-value pair with the lowest key (i.e., highest priority)
-in the set.\par
-In this report we present the design of a high performance lock-free linearizable PQ called CBPQ based on the paper [1].\par
-In a nutshell, CBPQ combines the following ideas. We use chunked linked-list as underlying data structure which allows to make search of chunk for insertion operation more efficiently. For threads concurrency we apply syncronization primitives such as critical sections and atomic operation (\textit{atomic or, atomic xor, atomic fetch and increment, atomic compare and swap}).\par
-The more detailed description of how CBPQ works will be considered in next section.
+They are widely used in a variety of applications and systems, such as simulation systems, job scheduling (in computer systems), networking (e.g. routing and real-time bandwidth management), file compression, numerical computations, and more. With the proliferation of modern parallel platforms, the need for a highperformance concurrent implementation of the priority queue has become acute.\par
+
+The basic structure of a priority queue (PQ) is a queue data structure, that stores values in a certain order depending on the priority. Therefore, to each element stored in this structure, there is also a priority associated, that can vary depending on the application. The abstract definition of a PQ provides a set of key-value pairs, where the key represents the priority.\par
+
+A PQ supports two operations: \textit{insert} and \textit{deleteMin}. The \textit{insert()} method inserts a new key-value pair into the set in the appropriate position (the keys don’t have to be unique), and the \textit{deleteMin()} method removes and returns the value associated with the lowest key (i.e., highest priority) in the set.\par
+
+In this report we present the design of a high performance lock-free linearizable PQ called CBPQ, based on the paper [1].\par
+In a nutshell, as described on [1], CBPQ combines the following ideas:
+
+\begin{itemize}
+  \item It is used a chunked linked-list as underlying data structure, which allows to search for a chunk for insertion operation more efficiently.
+  \item For threads concurrency we apply synchronization primitives, such as critical sections and atomic operations (\textit{atomic or, atomic xor, atomic fetch and increment, atomic compare and swap}).
+\end{itemize}
+
+The more detailed description of how CBPQ works will be provided in next section.
 
 \section{Overview}
 \subsection{CBPQ Design}
-As was already mentioned before CBPQ based on chunked linked-list. In particular, queue contains three chunks in the begining.\par
-First chunk is the special one which stores key-value pairs with highest priority (key range $0 \leqslant 20$). This is the only chunk which supports \textit{deleteMin} operation and doesn't permit direct insertion. In order to put elements into first chunk we should use assosiated buffer as discussed below.\par
-The remaining two chunks serve for insertion only and filled without buffer. Key ranges of second and third chunks are $21 \leqslant 40$ and $41 \leqslant 4294967295$ respectively.\par
-Due to lack of space we omit concrete description of chunk structure and its properties which might be found in paper our work based on: [1].\par
-Now, we would like to give a brief explanation of \textit{insert} and \textit{deleteMin} operations usage and take a look on several cases which might appear during queue exploitation.
+
+As it has been previously mentioned, CBPQ is based on a chunked linked-list structure. In particular, the PQ contains three chunks to store values in the beginning. Each chunk has an associated state, which describes which operation is being performed, or which operations are supported at the moment.\par
+
+The first chunk is structrured in a particular way, because it stores the key-value pairs with highest priority (key range $0 \leqslant 20$). Therefore, this is the only chunk which supports \textit{deleteMin} operations, and it doesn't permit direct insertion. In order to insert elements into this first chunk, we use an associated buffer, which will be further discussed below.\par
+
+The remaining two chunks serve for insertion only, which is done directly in the chunk, without a buffer. The key ranges of second and third chunks are $21 \leqslant 40$ and $41 \leqslant 4294967295$, respectively.\par
+Due to lack of space, we omit the concrete description of the chunk structure and its properties, which might be found in the paper our work is based on. [1]\par
+
+Now, we would like to give a brief explanation of the \textit{insert} and \textit{deleteMin} operations usage, and take a look on several cases which might appear during queue exploitation.
 
 \paragraph{Insertion into the first chunk}\mbox{}\par
-Insertion into the first chunk which has state \emph{DELETION} appers once we are about to store key-value pair with key range $0 \leqslant 20$.\par
-Right after first chunk was found, \textit{insertToBuffer()} function is called in order to put element into the buffer.
-Inside this function each thread checks either buffer was already allocated by one of previous threads or not. If it was then element is stored in already existing buffer, otherwise thread first allocates buffer and stores element into it.\par
-Every time new element placed into the buffer we need to restructure CBPQ in order to merge current first chunk with its buffer. First of all chunks are marked as \emph{FROZEN} in \textit{freezeChunk()} function. Doing this we signalize to all other threads that this chunk is already in use, so threads don't mess together trying to use one chunk. Once chunk is frozen, \textit{freezeRecovery()} function is called in order to restructure CBPQ. In case of insertion into the first chunk, we execute \textit{mergeFirstChunk()} function which merges current first chunk with buffer and returns pointer to the new first chunk which is now actual first chunk in our queue. In situation when current first chunk is already full and don't have space for new elements from buffer several \emph{DELETION} chunks are created. Also there might be a case when this is impossible for thread to put new element into buffer due to buffer is completely packed by other threads already. Then thread restructures queue first and then retries to store its element again.\par
-Once new key-value pair is successfully added into first chunk thread increases value of index using atomic F\&I instruction and we can safely return.
-\pagebreak
+
+Insertion into the first chunk may happen when its state is \emph{DELETION}, and we want to store a key-value pair with key range $0 \leqslant 20$.\par
+
+Initially, the correct chunk for insertion is searched in the queue. Right after first chunk is found, \textit{insertToBuffer()} function is called in order to put the new element into the buffer. Inside this function, each thread checks whether the buffer was already allocated by one of previous threads or not. If it was, then the element is stored in the already existing buffer, otherwise the thread first allocates the buffer, and then it stores the new item into it.\par
+
+Every time a new element is placed into the buffer, we need to restructure the CBPQ in order to merge the current first chunk with its buffer. First of all, the chunks are marked as \emph{FROZEN} in the \textit{freezeChunk()} function. Ny doing this, we signalize to all other threads that this chunk is already in use, so the othe threads don't try to use this chunk and cause a synchronization problem. Once the chunk is frozen, \textit{freezeRecovery()} function is called in order to restructure the CBPQ. In case of insertion into the first chunk, we execute \textit{mergeFirstChunk()} function, which merges the current first chunk with the buffer, and returns a pointer to the new first chunk (which is now the actual first chunk in our queue).\par
+
+In the situation where the current first chunk is already full and doesn't have space for new elements from the buffer, several new \emph{DELETION} chunks are created. Also, there might be a case where it is impossible for a thread to put a new element into the buffer, due to the fact that the buffer is completely packed by other threads already. Then, the thread first restructures the queue, and then retries to store its element again.\par
+
+Once the new key-value pair is successfully added into the first chunk, the thread increases the index using an atomic F\&I instruction, and we can safely return.
 
 \paragraph{Insertion into non-first chunk}\mbox{}\par
-Now let's consider insertion into any \emph{INSERTION} chunk. This case appear when key-value pair with key greater than 20 should be stored into queue.\par
-Generaly, there are two situation which might appear during insertion into non-first chunk.\par
-First case happens when we are going to store element into not fully packed chunk. If it's so, thread just gets actual index of first free position and store element directly into the chunk. After that insirtion operation is finished.\par
-The second case is a bit more complicated which appears when current non-first chunk is full and CBPQ should be restructured calling \textit{freezeChunk()} and \textit{freezeRecovery()} functions. These two function's behavior pretty the same as for insertion into the first chunk but couple of moments. Function \textit{freezeChunk()} calls \textit{freezeKeys()} function for every non-first chunk in order to freeze all elements which are stored into the chunk already. Function \textit{freezeRecovery()} invokes \textit{split()} function which splits current full non-first chunk into two new half-full chunks containing lower-valued and higher-valued parts of keys respectively. After CPBQ was restructured thread retries to store element into non-first chunk again.\par
-As in case of insertion into the first chunk, once new key-value pair is successfully added thread increases value of index using atomic F\&I instruction and we can safely return.
+
+Now let's consider an insertion into any \emph{INSERTION} chunk. This case happens when the key-value pair with a key greater than 20 needs to be stored into the queue. Generally, there are two possible situations which might appear during the insertion into a non-first chunk.\par
+
+The first case happens when we are going to store an element into a not fully packed chunk. In this situation, the thread just gets the actual index of the first free position and stores the element directly into the chunk. After that, the insertion operation is finished.\par
+
+The second case is a bit more complicated, and appears when the current non-first chunk is full, and the CBPQ should be restructured calling \textit{freezeChunk()} and \textit{freezeRecovery()} functions. These two functions' behaviors are essencially the same as for insertion into the first chunk. Function \textit{freezeChunk()} calls \textit{freezeKeys()} function for every non-first chunk, in order to freeze all elements which are already stored into the chunk. Function \textit{freezeRecovery()} invokes \textit{split()} function, which splits the current full non-first chunk into two new half-full chunks containing lower-valued and higher-valued parts of keys, respectivelly. After CPBQ is restructured, the thread retries to store the new element into the non-first chunk again.\par
+
+As it happens in case of insertion into the first chunk, once the new key-value pair is successfully added to the queue, the thread increases the value of index using atomic F\&I instruction, and we can safely return.
 
 \paragraph{Deletion from the first chunk}\mbox{}\par
 This operation is supported only by the first chunk or any other chunk with state \emph{DELETION}.\par
-Deletion is straightforward. Each thread just gets frozen index of current first chunk which points right after last deleted element and returns actual key-value pair. If all keys was already deleted from current first chunk, then CBPQ needs restructure in order to find other \emph{DELETION} chunk which becomes current first chunk. Once queue is restructured thread attempts to remove high-priority element again.\par
-Once deletion is done thread increases value of frozen index using atomic F\&I instruction and as in all previous cases we can safely return.
+
+The deletion operation is straightforward. Each thread just gets the frozen index of the current first chunk, which points right after the last deleted element and returns the actual key-value pair. If the first chunk is currently empty, then CBPQ needs to be restructured, in order to find another \emph{DELETION} chunk which becomes the current first chunk. Once the queue is restructured, the thread attempts to remove the high-priority element again.\par
+
+Once deletion is done, the thread increases the value of frozen index using atomic F\&I instruction, and as in all previous cases we can safely return.
+\pagebreak
 
 \paragraph{Worst-case bounds estimation}\mbox{}\par 
-According to information written above it becomes pretty obvious that the most expencive operation of our queue is restructure process.\par
-Considering this fact, we can state that worst case of insertion in CBPQ is a situation when all elements inserted only into the first chunk as insertion into the first chunk requires queue to be restructured every time.\par
-In deletion operation worst case appears when all elements have been deleted from the current first chunk and we need to execute the restructure of CBPQ in order to get key from other \emph{DELETION} chunk.\newline\par
+
+According to the provided description of the CBPQ implementation, it is possible to notice that the most expensive operation of our queue is the restructuration process.\par
+
+Considering this fact, we can state that the worst case of insertion in CBPQ is a situation where all new elements are inserted only into the first chunk (as insertion into the first chunk requires the queue to be restructured every time).\par
+
+In the deletion operation, the worst case appears when all elements have been deleted from the current first chunk, and we need to execute the CBPQ restructure in order to get the key to be deleted from other \emph{DELETION} chunk.\newline\par
+
 This section gives only a bird's eye overview of how CPBQ works. For any specific details we, again, refer you to the paper [1].
 
 \subsection{Project Structure}
-Project contains several directories: \textit{benchmark/} directory which stores script to run benchmark and collect data for plots construction, \textit{plots/} and \textit{report/} directories for plots and report storage respectively and \textit{src/} directory which contains all benchmark's and CPBQ's sources.\par
-Apart from that there are two files: \textit{Makefile} which serves to build and run benchmark and \textit{README.md} which contains project description.\par
+
+The project contains several directories: \textit{benchmark/} directory, which stores the script to run the benchmark and collect data for plots construction, \textit{plots/} and \textit{report/} directories for plots and report storage, respectively, and \textit{src/} directory, which contains all benchmark's and CPBQ's sources.\par
+
+Apart from that there are two files: \textit{Makefile}, which serves to build and run the benchmark, and \textit{README.md}, which contains project description.\par
+
 \textbf{Read README.md carefully before use any Makefile targets!}\par
 All project's sources might be found in [4].
 
 \section{Performance Evaluation}
-The provided benchmark is a set of five tests each of which runs main CBPQ operations. Before each test we fill our queue with 10.000 elements in order to don't run our benchmark for empty queue.\par
-First test shows\textbf{ mixed workload with 50\% of deletion operations}. During this test we insert and remove 5000 key-value pairs into/from CBPQ. The results of this test are shown on \cref{fig:plot1}.\par
-Second test shows \textbf{mixed workload with 80\% of deletion operations}. During this test we insert 2000 and remove 8000 key-value pairs into/from CBPQ. The results of this test are shown on \cref{fig:plot2}.\par
-Third test shows \textbf{mixed workload with 20\% of deletion operations}. During this test we insert 8000 and remove 2000 key-value pairs into/from CBPQ. The results of this test are shown on \cref{fig:plot3}.\par
-Fourth test represents \textbf{deletion-only workload}. During this test 10000 key-value pairs are removed from CBPQ. The results of this test are shown on \cref{fig:plot4}.\par
-Fifth test represents \textbf{insertion-only workload}. During this test 10000 key-value pairs are inserted into CBPQ. The results of this test are shown on \cref{fig:plot5}.\par
-Also we would like to notice that we, of course, tested our queue with much more elements, but due to time restrictions we decided to stop on 10000 elements in order to our benchmark doesn't run too long. In pratcice,  benchmark executes all test for 2 minutes approximately on Nebula cluster.
+The provided benchmark is a set of five tests, each of which runs the main CBPQ operations. Before each test, we fill our queue with 10.000 elements in order to not run our benchmark with an empty queue.\par
+
+The first test shows\textbf{ mixed workload with 50\% of deletion operations}. During this test, we insert and remove 5000 key-value pairs into/from CBPQ. The results of this test are shown on \cref{fig:plot1}.\par
+
+The second test shows \textbf{mixed workload with 80\% of deletion operations}. During this test, we insert 2000 and remove 8000 key-value pairs into/from CBPQ. The results of this test are shown on \cref{fig:plot2}.\par
+
+The third test shows \textbf{mixed workload with 20\% of deletion operations}. During this test, we insert 8000 and remove 2000 key-value pairs into/from CBPQ. The results of this test are shown on \cref{fig:plot3}.\par
+
+The fourth test represents \textbf{deletion-only workload}. During this test, 10000 key-value pairs are removed from CBPQ. The results of this test are shown on \cref{fig:plot4}.\par
+
+The fifth test represents \textbf{insertion-only workload}. During this test, 10000 key-value pairs are inserted into CBPQ. The results of this test are shown on \cref{fig:plot5}.\par
+
+Also, we would like to notice that we tested our queue with much more elements, but due to time restrictions, we decided to stop on 10000 elements so that our benchmark doesn't run too long. In pratcice, benchmark executes all tests for approximately 2 minutes on Nebula cluster.
 
 \begin{figure}[H]
   \centering
@@ -117,9 +148,11 @@ Also we would like to notice that we, of course, tested our queue with much more
 
 \section{Conclusion}
 In this report we presented a novel concurrent, linearizable, and lock-free design of the priority queue, called CBPQ, based on [1]. CBPQ cleverly combines the chunked linked-list and the performance advantage of the F\&I atomic instruction.\par
-According to the benchmark results, as we can see from plots, scalability of CBPQ increases with increasing number of \textit{Insert()} operations. So, we get benchmark results as follows.\par
-Best scalability was achieved for Insertion-only workload. Mixed workloads with 20\%, 50\% and 80\% of \textit{DeteleMin()} operations take second, third and fourh places respectively. Deletion-only workload barely has any speedup. That happens because as was already mentioned before, deletion is kind of cheap operation even for one thread and this is really hard to get any speedup for given number of elements stored into queue.\par
-In conclusion, we would like to say that CBPQ is quite sophisticated structure and we assume that our implementation of CBPQ is not one hundred percent fits to all ideas described in [1]. Most likely, something was missed and maybe because of that our queue doesn't scale as well as it might be. However, we believe that in terms of educational puproses we achieved a decent results and learned a lot of valuable things about multi-threads programming.
+According to the benchmark results, as we can see from the generated plots, scalability of CBPQ increases with increasing number of \textit{Insert()} operations. So, the benchamark results are analyzed as it follows.\par
+
+The best scalability was achieved for Insertion-only workload. The mixed workloads with 20\%, 50\% and 80\% of \textit{DeleteMin()} operations take second, third and fourh places, respectively. Deletion-only workload barely has any speedup. That happens because, as already mentioned before, deletion is a cheap operation, even for only one thread, and it is hard to get any speedup for a given number of elements stored into the queue.\par
+
+In conclusion, we would like to say that CBPQ is a quite sophisticated structure, and we assume that our implementation of CBPQ does completely fit to all ideas described in [1]. Most likely, something was missed, and maybe because of that our queue doesn't scale as well as it might be. However, we believe that in terms of educational purposes, we achieved decent results and learned a lot of valuable things about multi-threads programming.
 
 \pagebreak
 \section*{References}
