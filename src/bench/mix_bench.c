@@ -75,7 +75,7 @@ threads_times set_mixed_bench_50_del(void)
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.5;
 
-	printf("\n#1 Mixed workload with 50%% of DeleteMin() operations\n\n");
+	printf("\n#1 Mixed workload with 50%% of deleteMin() operations\n\n");
 
 	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
@@ -129,7 +129,7 @@ threads_times set_mixed_bench_80_del(void)
 	// Set deleteMin() operation percentage
 	p = WORKLOAD * 0.8;
 
-	printf("\n#2 Mixed workload with 80%% of DeteleMin() operations\n\n");
+	printf("\n#2 Mixed workload with 80%% of deteleMin() operations\n\n");
 
 	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
@@ -183,7 +183,7 @@ threads_times set_mixed_bench_20_del(void)
 
 	threads_times result;
 
-	printf("\n#3 Mixed workload with 20%% of DeteleMin() operations\n\n");
+	printf("\n#3 Mixed workload with 20%% of deteleMin() operations\n\n");
 
 	for(i = 1, j = 0; i <= 64; i += 8, j++)
 	{
